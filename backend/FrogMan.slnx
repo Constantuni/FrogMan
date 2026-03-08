@@ -1,0 +1,6 @@
+<Solution>
+  <Project Path="FrogMan.Api/FrogMan.Api.csproj" />
+  <Project Path="FrogMan.Application/FrogMan.Application.csproj" />
+  <Project Path="FrogMan.Domain/FrogMan.Domain.csproj" />
+  <Project Path="FrogMan.Infrastructure/FrogMan.Infrastructure.csproj" />
+</Solution>

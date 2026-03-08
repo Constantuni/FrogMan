@@ -1,0 +1,6 @@
+@FrogMan.Api_HostAddress = http://localhost:5020
+
+GET {{FrogMan.Api_HostAddress}}/weatherforecast/
+Accept: application/json
+
+###
