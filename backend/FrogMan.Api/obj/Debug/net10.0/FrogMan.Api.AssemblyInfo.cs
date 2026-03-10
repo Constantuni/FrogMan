@@ -10,10 +10,11 @@
 using System;
 using System.Reflection;
 
+[assembly: Microsoft.Extensions.Configuration.UserSecrets.UserSecretsIdAttribute("7bc0eeb6-89e8-4765-9863-b064f102939a")]
 [assembly: System.Reflection.AssemblyCompanyAttribute("FrogMan.Api")]
 [assembly: System.Reflection.AssemblyConfigurationAttribute("Debug")]
 [assembly: System.Reflection.AssemblyFileVersionAttribute("1.0.0.0")]
-[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0")]
+[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+f11b9d6d0880780838bb19b981948a2eb6e51a65")]
 [assembly: System.Reflection.AssemblyProductAttribute("FrogMan.Api")]
 [assembly: System.Reflection.AssemblyTitleAttribute("FrogMan.Api")]
 [assembly: System.Reflection.AssemblyVersionAttribute("1.0.0.0")]

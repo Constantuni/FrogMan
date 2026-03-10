@@ -9,3 +9,4 @@
 /Users/afs/FrogMan/backend/FrogMan.Domain/obj/Debug/net10.0/refint/FrogMan.Domain.dll
 /Users/afs/FrogMan/backend/FrogMan.Domain/obj/Debug/net10.0/FrogMan.Domain.pdb
 /Users/afs/FrogMan/backend/FrogMan.Domain/obj/Debug/net10.0/ref/FrogMan.Domain.dll
+/Users/afs/FrogMan/backend/FrogMan.Domain/obj/Debug/net10.0/FrogMan.Domain.sourcelink.json

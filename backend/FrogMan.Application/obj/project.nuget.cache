@@ -1,8 +1,10 @@
 {
   "version": 2,
-  "dgSpecHash": "VuHKuwkL3Lc=",
+  "dgSpecHash": "qAwp7pnEVZQ=",
   "success": true,
   "projectFilePath": "/Users/afs/FrogMan/backend/FrogMan.Application/FrogMan.Application.csproj",
-  "expectedPackageFiles": [],
+  "expectedPackageFiles": [
+    "/Users/afs/.nuget/packages/bcrypt.net-next/4.1.0/bcrypt.net-next.4.1.0.nupkg.sha512"
+  ],
   "logs": []
 }

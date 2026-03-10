@@ -1,13 +1,26 @@
 services:
-  db:
-    image: mcr.microsoft.com/mssql/server:2022-latest
-    ports:
-      - "1433:1433"
+  postgres-db:
+    image: postgres:16-alpine
+    container_name: frogman-db-local
     environment:
-      - ACCEPT_EULA=Y
-      - MSSQL_SA_PASSWORD=SaPassword01!
-  
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: SaPassword01
+      POSTGRES_DB: FrogManDb
+    ports:
+      - "5432:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
   redis:
     image: redis:alpine
+    container_name: frogman-redis-local
     ports:
       - "6379:6379"
+
+volumes:
+  pgdata:

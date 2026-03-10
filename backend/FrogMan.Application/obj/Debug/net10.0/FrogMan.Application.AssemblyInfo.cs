@@ -13,7 +13,7 @@ using System.Reflection;
 [assembly: System.Reflection.AssemblyCompanyAttribute("FrogMan.Application")]
 [assembly: System.Reflection.AssemblyConfigurationAttribute("Debug")]
 [assembly: System.Reflection.AssemblyFileVersionAttribute("1.0.0.0")]
-[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0")]
+[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+f11b9d6d0880780838bb19b981948a2eb6e51a65")]
 [assembly: System.Reflection.AssemblyProductAttribute("FrogMan.Application")]
 [assembly: System.Reflection.AssemblyTitleAttribute("FrogMan.Application")]
 [assembly: System.Reflection.AssemblyVersionAttribute("1.0.0.0")]

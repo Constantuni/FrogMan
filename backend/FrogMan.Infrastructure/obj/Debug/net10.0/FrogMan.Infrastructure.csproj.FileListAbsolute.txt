@@ -15,3 +15,6 @@
 /Users/afs/FrogMan/backend/FrogMan.Infrastructure/obj/Debug/net10.0/refint/FrogMan.Infrastructure.dll
 /Users/afs/FrogMan/backend/FrogMan.Infrastructure/obj/Debug/net10.0/FrogMan.Infrastructure.pdb
 /Users/afs/FrogMan/backend/FrogMan.Infrastructure/obj/Debug/net10.0/ref/FrogMan.Infrastructure.dll
+/Users/afs/FrogMan/backend/FrogMan.Infrastructure/bin/Debug/net10.0/FrogMan.Infrastructure.runtimeconfig.json
+/Users/afs/FrogMan/backend/FrogMan.Infrastructure/obj/Debug/net10.0/FrogMan.Infrastructure.sourcelink.json
+/Users/afs/FrogMan/backend/FrogMan.Infrastructure/obj/Debug/net10.0/FrogMan.Infrastructure.genruntimeconfig.cache
