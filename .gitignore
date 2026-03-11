@@ -1,6 +1,10 @@
 # .NET build artifacts
 bin/
 obj/
+backend/FrogMan.Api/bin/
+backend/FrogMan.Infrastructure/bin/
+backend/FrogMan.Application/bin/
+backend/FrogMan.Domain/bin/
 
 # Visual Studio
 .vs/

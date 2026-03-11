@@ -19,13 +19,9 @@ const Login = () => {
 
     try {
       const res = await api.post('/auth/login', { email, password });
-      setAuth(
-        {
-          username: res.data.username,
-          email: res.data.email,
-        },
-        res.data.token
-      );
+
+      setAuth(res.data.user, res.data.token);
+
       console.log('auth response', res.data);
       navigate('/dashboard');
     } catch (err: any) {

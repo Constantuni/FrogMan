@@ -1,39 +1,90 @@
+using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
 using System.Text;
-using System.IdentityModel.Tokens.Jwt;
-using Microsoft.IdentityModel.Tokens;
-using Microsoft.Extensions.Configuration;
-using Microsoft.EntityFrameworkCore;
-using FrogMan.Application.Interfaces;
-using FrogMan.Infrastructure.Persistence;
-using FrogMan.Domain.Entities;
-using FrogMan.Application.Security;
 using FrogMan.Application.DTOs;
+using FrogMan.Application.Interfaces;
+using FrogMan.Application.Security;
+using FrogMan.Domain.Entities;
+using FrogMan.Infrastructure.Persistence;
+using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Configuration;
+using Microsoft.IdentityModel.Tokens;
+using Npgsql;
 
 namespace FrogMan.Infrastructure.Authentication;
 
-public class AuthService(ApplicationDbContext context, IConfiguration config) : IAuthService 
+public class AuthService(ApplicationDbContext context, IConfiguration config) : IAuthService
 {
-    public async Task<AuthResponse?> RegisterAsync(RegisterRequest request)
+    public async Task<AuthResponse> RegisterAsync(RegisterRequest request)
     {
-        var user = new User {
-            Id = Guid.NewGuid(),
-            Username = request.Username,
-            Email = request.Email,
-            PasswordHash = BCrypt.Net.BCrypt.HashPassword(request.Password)
-        };
+        var username = request.Username.Trim();
+        var email = request.Email.Trim();
 
-        context.Users.Add(user);
-        await context.SaveChangesAsync();
+        var emailExists = await context.Users.AnyAsync(u => u.Email == email);
+        if (emailExists)
+        {
+            throw new InvalidOperationException("Email is already in use.");
+        }
 
-        var token = GenerateJwt(user);
-        return new AuthResponse(token, user.Username, user.Email);
+        await using var transaction = await context.Database.BeginTransactionAsync();
+
+        try
+        {
+            var user = new User
+            {
+                Id = Guid.NewGuid(),
+                Username = username,
+                Email = email,
+                PasswordHash = BCrypt.Net.BCrypt.HashPassword(request.Password)
+            };
+
+            var workspace = new Workspace
+            {
+                Id = Guid.NewGuid(),
+                Name = $"{username}'s Workspace",
+                OwnerUserId = user.Id
+            };
+
+            var workspaceMember = new WorkspaceMember
+            {
+                Id = Guid.NewGuid(),
+                WorkspaceId = workspace.Id,
+                UserId = user.Id,
+                Role = "Owner"
+            };
+
+            context.Users.Add(user);
+            context.Workspaces.Add(workspace);
+            context.WorkspaceMembers.Add(workspaceMember);
+
+            await context.SaveChangesAsync();
+            await transaction.CommitAsync();
+
+            var token = GenerateJwt(user);
+
+            return new AuthResponse(
+                token,
+                new UserDto(user.Id, user.Username, user.Email)
+            );
+        }
+        catch (DbUpdateException ex) when (IsUniqueConstraintViolation(ex))
+        {
+            await transaction.RollbackAsync();
+            throw new InvalidOperationException("Email is already in use.");
+        }
+        catch
+        {
+            await transaction.RollbackAsync();
+            throw;
+        }
     }
 
     public async Task<AuthResponse?> LoginAsync(string email, string password)
     {
+        var normalizedEmail = email.Trim();
+
         var user = await context.Users
-            .FirstOrDefaultAsync(u => u.Email == email);
+            .FirstOrDefaultAsync(u => u.Email == normalizedEmail);
 
         if (user == null || !BCrypt.Net.BCrypt.Verify(password, user.PasswordHash))
         {
@@ -41,7 +92,11 @@ public class AuthService(ApplicationDbContext context, IConfiguration config) : 
         }
 
         var token = GenerateJwt(user);
-        return new AuthResponse(token, user.Username, user.Email);
+
+        return new AuthResponse(
+            token,
+            new UserDto(user.Id, user.Username, user.Email)
+        );
     }
 
     private string GenerateJwt(User user)
@@ -54,10 +109,10 @@ public class AuthService(ApplicationDbContext context, IConfiguration config) : 
 
         var claims = new List<Claim>
         {
-            new (JwtRegisteredClaimNames.Sub, user.Id.ToString()),
-            new (JwtRegisteredClaimNames.UniqueName, user.Username),
-            new (JwtRegisteredClaimNames.Email, user.Email),
-            new (JwtRegisteredClaimNames.Jti, Guid.NewGuid().ToString())
+            new(JwtRegisteredClaimNames.Sub, user.Id.ToString()),
+            new(JwtRegisteredClaimNames.UniqueName, user.Username),
+            new(JwtRegisteredClaimNames.Email, user.Email),
+            new(JwtRegisteredClaimNames.Jti, Guid.NewGuid().ToString())
         };
 
         var token = new JwtSecurityToken(
@@ -69,5 +124,11 @@ public class AuthService(ApplicationDbContext context, IConfiguration config) : 
         );
 
         return new JwtSecurityTokenHandler().WriteToken(token);
+    }
+
+    private static bool IsUniqueConstraintViolation(DbUpdateException ex)
+    {
+        return ex.InnerException is PostgresException postgresEx &&
+               postgresEx.SqlState == PostgresErrorCodes.UniqueViolation;
     }
 }

@@ -1,3 +1,5 @@
 namespace FrogMan.Application.DTOs;
 
-public record AuthResponse(string Token, string Username, string Email);
+public record UserDto(Guid Id, string Username, string Email);
+
+public record AuthResponse(string Token, UserDto User);
