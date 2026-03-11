@@ -1,31 +1,51 @@
 import React from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import { useAuthStore } from './store/authStore';
+
 import Login from './pages/Login';
 import Register from './pages/Register';
 import Dashboard from './pages/Dashboard';
-import ProtectedRoute from './routes/ProtectedRoute.tsx';
+
+import ProtectedRoute from './routes/ProtectedRoute';
+import PublicRoute from './routes/PublicRoute';
 
 const DefaultRedirect = () => {
   const token = useAuthStore((state) => state.token);
-  return token ? <Navigate to="/dashboard" /> : <Navigate to="/login" />;
+  return <Navigate to={token ? '/dashboard' : '/login'} replace />;
 };
 
 function App() {
   return (
     <Router>
       <Routes>
-        {/* Public Routes */}
-        <Route path="/login" element={<Login />} />
-        <Route path="/register" element={<Register />} />
+        <Route path="/" element={<DefaultRedirect />} />
 
-        {/* Protected Routes */}
+        {/* Public routes */}
+        <Route
+          path="/login"
+          element={
+            <PublicRoute>
+              <Login />
+            </PublicRoute>
+          }
+        />
+
+        <Route
+          path="/register"
+          element={
+            <PublicRoute>
+              <Register />
+            </PublicRoute>
+          }
+        />
+
+        {/* Protected routes */}
         <Route element={<ProtectedRoute />}>
           <Route path="/dashboard" element={<Dashboard />} />
         </Route>
 
-        {/* Default route */}
-        <Route path="*" element={<Login />} />
+        {/* Fallback */}
+        <Route path="*" element={<DefaultRedirect />} />
       </Routes>
     </Router>
   );
