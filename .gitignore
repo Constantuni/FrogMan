@@ -44,8 +44,6 @@ thumb
 sketch
 
 # App configuration
-appsettings.Development.json
-appsettings.json
 docker-compose.yml
 
 # Optional node_modules inside ASP.NET wwwroot
