@@ -52,3 +52,5 @@ docker-compose.yml
 
 # Optional node_modules inside ASP.NET wwwroot
 /wwwroot/node_modules
+
+.fake
