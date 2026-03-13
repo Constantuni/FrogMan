@@ -8,7 +8,7 @@
       "applicationUrl": "http://localhost:5020",
       "environmentVariables": {
         "ASPNETCORE_ENVIRONMENT": "Development",
-        "ASPNETCORE_HTTPS_PORT": "0"
+        "ASPNETCORE_HTTPS_PORT": "7212"
       }
     },
     "https": {
