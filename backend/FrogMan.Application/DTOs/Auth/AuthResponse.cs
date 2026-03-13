@@ -1,4 +1,4 @@
-namespace FrogMan.Application.DTOs;
+namespace FrogMan.Application.DTOs.Auth;
 
 public record UserDto(Guid Id, string Username, string Email);
 

@@ -1,4 +1,4 @@
-using FrogMan.Application.DTOs;
+using FrogMan.Application.DTOs.Auth;
 using FrogMan.Application.Interfaces;
 using Microsoft.AspNetCore.Mvc;
 

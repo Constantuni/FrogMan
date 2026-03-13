@@ -1,7 +1,7 @@
 using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
 using System.Text;
-using FrogMan.Application.DTOs;
+using FrogMan.Application.DTOs.Auth;
 using FrogMan.Application.Interfaces;
 using FrogMan.Application.Security;
 using FrogMan.Domain.Entities;
@@ -110,6 +110,7 @@ public class AuthService(ApplicationDbContext context, IConfiguration config) : 
         var claims = new List<Claim>
         {
             new(JwtRegisteredClaimNames.Sub, user.Id.ToString()),
+            new(ClaimTypes.NameIdentifier, user.Id.ToString()),
             new(JwtRegisteredClaimNames.UniqueName, user.Username),
             new(JwtRegisteredClaimNames.Email, user.Email),
             new(JwtRegisteredClaimNames.Jti, Guid.NewGuid().ToString())

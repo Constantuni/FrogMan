@@ -1,4 +1,4 @@
-using FrogMan.Application.DTOs;
+using FrogMan.Application.DTOs.Auth;
 
 namespace FrogMan.Application.Interfaces;
 
