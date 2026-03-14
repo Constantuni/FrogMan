@@ -21,17 +21,6 @@ public class ProjectsController(ApplicationDbContext dbContext) : ControllerBase
     {
         var userId = User.GetUserId();
 
-        var trimmedName = request.Name?.Trim();
-
-        if (string.IsNullOrWhiteSpace(trimmedName))
-            return BadRequest("Project name is required.");
-
-        if (trimmedName.Length > 150)
-            return BadRequest("Project name must not exceed 150 characters.");
-
-        if (!string.IsNullOrWhiteSpace(request.Description) && request.Description.Length > 1000)
-            return BadRequest("Project description must not exceed 1000 characters.");
-
         var isWorkspaceMember = await dbContext.WorkspaceMembers
             .AsNoTracking()
             .AnyAsync(
@@ -43,9 +32,9 @@ public class ProjectsController(ApplicationDbContext dbContext) : ControllerBase
 
         var project = new Project
         {
-            Name = trimmedName,
+            Name = request.Name.Trim(),
             Description = string.IsNullOrWhiteSpace(request.Description)
-                ? null // String.Empty
+                ? null
                 : request.Description.Trim(),
             WorkspaceId = workspaceId,
             CreatedByUserId = userId
@@ -64,7 +53,7 @@ public class ProjectsController(ApplicationDbContext dbContext) : ControllerBase
             CreatedAt = project.CreatedAt
         };
 
-        return Created($"/api/workspaces/{workspaceId}/projects", response);
+        return Created($"/api/workspaces/{workspaceId}/projects/{project.Id}", response);
     }
 
     [HttpGet("workspaces/{workspaceId:guid}/projects")]
@@ -99,5 +88,119 @@ public class ProjectsController(ApplicationDbContext dbContext) : ControllerBase
             .ToListAsync(cancellationToken);
 
         return Ok(projects);
+    }
+
+    [HttpGet("workspaces/{workspaceId:guid}/projects/{projectId:guid}")]
+    public async Task<ActionResult<ProjectResponse>> GetProjectById(
+        Guid workspaceId,
+        Guid projectId,
+        CancellationToken cancellationToken)
+    {
+        var userId = User.GetUserId();
+
+        var isWorkspaceMember = await dbContext.WorkspaceMembers
+            .AsNoTracking()
+            .AnyAsync(
+                wm => wm.WorkspaceId == workspaceId && wm.UserId == userId,
+                cancellationToken);
+
+        if (!isWorkspaceMember)
+            return NotFound();
+
+        var project = await dbContext.Projects
+            .AsNoTracking()
+            .Where(p => p.WorkspaceId == workspaceId && p.Id == projectId)
+            .Select(p => new ProjectResponse
+            {
+                Id = p.Id,
+                Name = p.Name,
+                Description = p.Description,
+                WorkspaceId = p.WorkspaceId,
+                CreatedByUserId = p.CreatedByUserId,
+                CreatedAt = p.CreatedAt
+            })
+            .FirstOrDefaultAsync(cancellationToken);
+
+        if (project is null)
+            return NotFound();
+
+        return Ok(project);
+    }
+
+    [HttpPut("workspaces/{workspaceId:guid}/projects/{projectId:guid}")]
+    public async Task<ActionResult<ProjectResponse>> UpdateProject(
+        Guid workspaceId,
+        Guid projectId,
+        [FromBody] UpdateProjectRequest request,
+        CancellationToken cancellationToken)
+    {
+        var userId = User.GetUserId();
+
+        var isWorkspaceMember = await dbContext.WorkspaceMembers
+            .AsNoTracking()
+            .AnyAsync(
+                wm => wm.WorkspaceId == workspaceId && wm.UserId == userId,
+                cancellationToken);
+
+        if (!isWorkspaceMember)
+            return NotFound();
+
+        var project = await dbContext.Projects
+            .FirstOrDefaultAsync(
+                p => p.WorkspaceId == workspaceId && p.Id == projectId,
+                cancellationToken);
+
+        if (project is null)
+            return NotFound();
+
+        project.Name = request.Name.Trim();
+        project.Description = string.IsNullOrWhiteSpace(request.Description)
+            ? null
+            : request.Description.Trim();
+
+        await dbContext.SaveChangesAsync(cancellationToken);
+
+        var response = new ProjectResponse
+        {
+            Id = project.Id,
+            Name = project.Name,
+            Description = project.Description,
+            WorkspaceId = project.WorkspaceId,
+            CreatedByUserId = project.CreatedByUserId,
+            CreatedAt = project.CreatedAt
+        };
+
+        return Ok(response);
+    }
+
+    [HttpDelete("workspaces/{workspaceId:guid}/projects/{projectId:guid}")]
+    public async Task<IActionResult> DeleteProject(
+        Guid workspaceId,
+        Guid projectId,
+        CancellationToken cancellationToken)
+    {
+        var userId = User.GetUserId();
+
+        var isWorkspaceMember = await dbContext.WorkspaceMembers
+            .AsNoTracking()
+            .AnyAsync(
+                wm => wm.WorkspaceId == workspaceId && wm.UserId == userId,
+                cancellationToken);
+
+        if (!isWorkspaceMember)
+            return NotFound();
+
+        var project = await dbContext.Projects
+            .FirstOrDefaultAsync(
+                p => p.WorkspaceId == workspaceId && p.Id == projectId,
+                cancellationToken);
+
+        if (project is null)
+            return NotFound();
+
+        dbContext.Projects.Remove(project);
+        await dbContext.SaveChangesAsync(cancellationToken);
+
+        return NoContent();
     }
 }
