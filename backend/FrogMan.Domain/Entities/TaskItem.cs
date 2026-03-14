@@ -1,3 +1,5 @@
+using FrogMan.Domain.Constants;
+
 namespace FrogMan.Domain.Entities;
 
 public class TaskItem
@@ -9,8 +11,8 @@ public class TaskItem
     public string Title { get; set; } = string.Empty;
     public string? Description { get; set; }
 
-    public string Status { get; set; } = "Todo";
-    public string Priority { get; set; } = "Medium";
+    public string Status { get; set; } = TaskStatuses.ToDo;
+    public string Priority { get; set; } = TaskPriorities.Medium;
 
 
     public Guid CreatedByUserId { get; set; }

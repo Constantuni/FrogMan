@@ -5,7 +5,7 @@ using FrogMan.Application;
 using FrogMan.Application.Validators.Tasks;
 using FrogMan.Application.Interfaces;
 using FrogMan.Application.Security;
-using FrogMan.Infrastructure.Authentication;
+using FrogMan.Infrastructure.Auth;
 using FrogMan.Infrastructure.Persistence;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;

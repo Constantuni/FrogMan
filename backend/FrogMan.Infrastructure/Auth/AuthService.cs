@@ -11,7 +11,7 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.IdentityModel.Tokens;
 using Npgsql;
 
-namespace FrogMan.Infrastructure.Authentication;
+namespace FrogMan.Infrastructure.Auth;
 
 public class AuthService(ApplicationDbContext context, IConfiguration config) : IAuthService
 {

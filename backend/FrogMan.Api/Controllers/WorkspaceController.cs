@@ -1,7 +1,7 @@
 using FrogMan.Api.Common;
 using FrogMan.Application.DTOs.Workspaces;
-using FrogMan.Domain.Entities;
 using FrogMan.Domain.Constants;
+using FrogMan.Domain.Entities;
 using FrogMan.Infrastructure.Persistence;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
@@ -21,9 +21,6 @@ public class WorkspacesController(ApplicationDbContext dbContext) : ControllerBa
     {
         var userId = User.GetUserId();
 
-        if (string.IsNullOrWhiteSpace(request.Name))
-            return BadRequest("Workspace name is required.");
-
         var workspace = new Workspace
         {
             Name = request.Name.Trim(),
@@ -42,15 +39,10 @@ public class WorkspacesController(ApplicationDbContext dbContext) : ControllerBa
 
         await dbContext.SaveChangesAsync(cancellationToken);
 
-        var response = new WorkspaceResponse
-        {
-            Id = workspace.Id,
-            Name = workspace.Name,
-            OwnerUserId = workspace.OwnerUserId,
-            CreatedAt = workspace.CreatedAt
-        };
-
-        return CreatedAtAction(nameof(GetWorkspaceById), new { id = workspace.Id }, response);
+        return CreatedAtAction(
+            nameof(GetWorkspaceById),
+            new { id = workspace.Id },
+            MapToResponse(workspace));
     }
 
     [HttpGet]
@@ -98,5 +90,80 @@ public class WorkspacesController(ApplicationDbContext dbContext) : ControllerBa
             return NotFound();
 
         return Ok(workspace);
+    }
+
+    [HttpPut("{id:guid}")]
+    public async Task<ActionResult<WorkspaceResponse>> UpdateWorkspace(
+        Guid id,
+        [FromBody] UpdateWorkspaceRequest request,
+        CancellationToken cancellationToken)
+    {
+        var userId = User.GetUserId();
+
+        var workspace = await dbContext.Workspaces
+            .FirstOrDefaultAsync(w => w.Id == id, cancellationToken);
+
+        if (workspace is null)
+            return NotFound();
+
+        var membership = await dbContext.WorkspaceMembers
+            .AsNoTracking()
+            .FirstOrDefaultAsync(
+                wm => wm.WorkspaceId == id && wm.UserId == userId,
+                cancellationToken);
+
+        if (membership is null)
+            return NotFound();
+
+        if (workspace.OwnerUserId != userId)
+            return Forbid();
+
+        workspace.Name = request.Name.Trim();
+
+        await dbContext.SaveChangesAsync(cancellationToken);
+
+        return Ok(MapToResponse(workspace));
+    }
+
+    [HttpDelete("{id:guid}")]
+    public async Task<IActionResult> DeleteWorkspace(
+        Guid id,
+        CancellationToken cancellationToken)
+    {
+        var userId = User.GetUserId();
+
+        var workspace = await dbContext.Workspaces
+            .FirstOrDefaultAsync(w => w.Id == id, cancellationToken);
+
+        if (workspace is null)
+            return NotFound();
+
+        var membership = await dbContext.WorkspaceMembers
+            .AsNoTracking()
+            .FirstOrDefaultAsync(
+                wm => wm.WorkspaceId == id && wm.UserId == userId,
+                cancellationToken);
+
+        if (membership is null)
+            return NotFound();
+
+        if (workspace.OwnerUserId != userId)
+            return Forbid();
+
+        dbContext.Workspaces.Remove(workspace);
+        await dbContext.SaveChangesAsync(cancellationToken);
+
+        return NoContent();
+    }
+
+    private static WorkspaceResponse MapToResponse(Workspace workspace)
+    {
+        return new WorkspaceResponse
+        {
+            Id = workspace.Id,
+            Name = workspace.Name,
+            OwnerUserId = workspace.OwnerUserId,
+            CreatedAt = workspace.CreatedAt
+        };
     }
 }
