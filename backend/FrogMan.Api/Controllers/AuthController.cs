@@ -8,14 +8,14 @@ namespace FrogMan.Api.Controllers;
 [Route("api/[controller]")]
 public class AuthController(IAuthService authService) : ControllerBase
 {
-    private readonly IAuthService _authService = authService;
-
     [HttpPost("register")]
-    public async Task<IActionResult> Register([FromBody] RegisterRequest request)
+    public async Task<IActionResult> Register(
+        [FromBody] RegisterRequest request,
+        CancellationToken cancellationToken)
     {
         try
         {
-            var result = await _authService.RegisterAsync(request);
+            var result = await authService.RegisterAsync(request, cancellationToken);
             return Ok(result);
         }
         catch (InvalidOperationException ex)
@@ -25,14 +25,17 @@ public class AuthController(IAuthService authService) : ControllerBase
     }
 
     [HttpPost("login")]
-    public async Task<IActionResult> Login([FromBody] LoginRequest request)
+    public async Task<IActionResult> Login(
+        [FromBody] LoginRequest request,
+        CancellationToken cancellationToken)
     {
-        var result = await _authService.LoginAsync(request.Email, request.Password);
+        var result = await authService.LoginAsync(
+            request.Email,
+            request.Password,
+            cancellationToken);
 
-        if (result == null)
-        {
+        if (result is null)
             return Unauthorized(new { message = "Invalid email or password." });
-        }
 
         return Ok(result);
     }

@@ -15,18 +15,20 @@ namespace FrogMan.Infrastructure.Authentication;
 
 public class AuthService(ApplicationDbContext context, IConfiguration config) : IAuthService
 {
-    public async Task<AuthResponse> RegisterAsync(RegisterRequest request)
+    public async Task<AuthResponse> RegisterAsync(
+        RegisterRequest request,
+        CancellationToken cancellationToken = default)
     {
         var username = request.Username.Trim();
         var email = request.Email.Trim();
 
-        var emailExists = await context.Users.AnyAsync(u => u.Email == email);
-        if (emailExists)
-        {
-            throw new InvalidOperationException("Email is already in use.");
-        }
+        var emailExists = await context.Users
+            .AnyAsync(u => u.Email == email, cancellationToken);
 
-        await using var transaction = await context.Database.BeginTransactionAsync();
+        if (emailExists)
+            throw new InvalidOperationException("Email is already in use.");
+
+        await using var transaction = await context.Database.BeginTransactionAsync(cancellationToken);
 
         try
         {
@@ -57,8 +59,8 @@ public class AuthService(ApplicationDbContext context, IConfiguration config) : 
             context.Workspaces.Add(workspace);
             context.WorkspaceMembers.Add(workspaceMember);
 
-            await context.SaveChangesAsync();
-            await transaction.CommitAsync();
+            await context.SaveChangesAsync(cancellationToken);
+            await transaction.CommitAsync(cancellationToken);
 
             var token = GenerateJwt(user);
 
@@ -69,27 +71,28 @@ public class AuthService(ApplicationDbContext context, IConfiguration config) : 
         }
         catch (DbUpdateException ex) when (IsUniqueConstraintViolation(ex))
         {
-            await transaction.RollbackAsync();
+            await transaction.RollbackAsync(cancellationToken);
             throw new InvalidOperationException("Email is already in use.");
         }
         catch
         {
-            await transaction.RollbackAsync();
+            await transaction.RollbackAsync(cancellationToken);
             throw;
         }
     }
 
-    public async Task<AuthResponse?> LoginAsync(string email, string password)
+    public async Task<AuthResponse?> LoginAsync(
+        string email,
+        string password,
+        CancellationToken cancellationToken = default)
     {
         var normalizedEmail = email.Trim();
 
         var user = await context.Users
-            .FirstOrDefaultAsync(u => u.Email == normalizedEmail);
+            .FirstOrDefaultAsync(u => u.Email == normalizedEmail, cancellationToken);
 
-        if (user == null || !BCrypt.Net.BCrypt.Verify(password, user.PasswordHash))
-        {
+        if (user is null || !BCrypt.Net.BCrypt.Verify(password, user.PasswordHash))
             return null;
-        }
 
         var token = GenerateJwt(user);
 
