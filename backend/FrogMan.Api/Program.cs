@@ -1,10 +1,15 @@
 using System.Text;
+using FluentValidation;
+using FluentValidation.AspNetCore;
+using FrogMan.Application;
+using FrogMan.Application.Validators.Tasks;
 using FrogMan.Application.Interfaces;
 using FrogMan.Application.Security;
 using FrogMan.Infrastructure.Authentication;
 using FrogMan.Infrastructure.Persistence;
-using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi;
 
@@ -48,6 +53,8 @@ builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
 builder.Services.AddAuthorization();
 builder.Services.AddScoped<IAuthService, AuthService>();
 builder.Services.AddControllers();
+builder.Services.AddFluentValidationAutoValidation();
+builder.Services.AddValidatorsFromAssemblyContaining<IApplicationAssemblyMarker>();
 builder.Services.AddEndpointsApiExplorer();
 
 builder.Services.AddSwaggerGen(options =>

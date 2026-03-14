@@ -1,6 +1,5 @@
 using FrogMan.Api.Common;
 using FrogMan.Application.DTOs.Tasks;
-using FrogMan.Domain.Constants;
 using FrogMan.Domain.Entities;
 using FrogMan.Infrastructure.Persistence;
 using Microsoft.AspNetCore.Authorization;
@@ -20,9 +19,6 @@ public class TasksController(ApplicationDbContext dbContext) : ControllerBase
         [FromBody] CreateTaskRequest request,
         CancellationToken cancellationToken)
     {
-        if (request is null)
-            return BadRequest("Request body is required.");
-
         var userId = User.GetUserId();
 
         var projectInfo = await dbContext.Projects
@@ -47,35 +43,24 @@ public class TasksController(ApplicationDbContext dbContext) : ControllerBase
         if (!isWorkspaceMember)
             return NotFound();
 
-        var validationError = await ValidateTaskRequestAsync(
+        var businessRuleError = await ValidateTaskBusinessRulesAsync(
             workspaceId: projectInfo.WorkspaceId,
-            title: request.Title,
-            description: request.Description,
-            status: request.Status,
-            priority: request.Priority,
             assignedToUserId: request.AssignedToUserId,
             cancellationToken: cancellationToken);
 
-        if (validationError is not null)
-            return validationError;
-
-        var normalizedTitle = request.Title!.Trim();
-        var normalizedDescription = string.IsNullOrWhiteSpace(request.Description)
-            ? null
-            : request.Description.Trim();
-
-        var normalizedStatus = request.Status!.Trim();
-        var normalizedPriority = request.Priority!.Trim();
-        var normalizedAssignedToUserId = NormalizeOptionalGuid(request.AssignedToUserId);
+        if (businessRuleError is not null)
+            return businessRuleError;
 
         var task = new TaskItem
         {
             ProjectId = projectId,
-            Title = normalizedTitle,
-            Description = normalizedDescription,
-            Status = normalizedStatus,
-            Priority = normalizedPriority,
-            AssignedToUserId = normalizedAssignedToUserId,
+            Title = request.Title!.Trim(),
+            Description = string.IsNullOrWhiteSpace(request.Description)
+                ? null
+                : request.Description.Trim(),
+            Status = request.Status!.Trim(),
+            Priority = request.Priority!.Trim(),
+            AssignedToUserId = NormalizeOptionalGuid(request.AssignedToUserId),
             DueDate = request.DueDate,
             CreatedByUserId = userId
         };
@@ -83,9 +68,10 @@ public class TasksController(ApplicationDbContext dbContext) : ControllerBase
         dbContext.TaskItems.Add(task);
         await dbContext.SaveChangesAsync(cancellationToken);
 
-        var response = MapToResponse(task);
-
-        return CreatedAtAction(nameof(GetTaskById), new { taskId = task.Id }, response);
+        return CreatedAtAction(
+            nameof(GetTaskById),
+            new { taskId = task.Id },
+            MapToResponse(task));
     }
 
     [HttpGet("projects/{projectId:guid}/tasks")]
@@ -178,9 +164,6 @@ public class TasksController(ApplicationDbContext dbContext) : ControllerBase
         [FromBody] UpdateTaskRequest request,
         CancellationToken cancellationToken)
     {
-        if (request is null)
-            return BadRequest("Request body is required.");
-
         var userId = User.GetUserId();
 
         var task = await dbContext.TaskItems
@@ -199,17 +182,13 @@ public class TasksController(ApplicationDbContext dbContext) : ControllerBase
         if (!isWorkspaceMember)
             return NotFound();
 
-        var validationError = await ValidateTaskRequestAsync(
+        var businessRuleError = await ValidateTaskBusinessRulesAsync(
             workspaceId: task.Project.WorkspaceId,
-            title: request.Title,
-            description: request.Description,
-            status: request.Status,
-            priority: request.Priority,
             assignedToUserId: request.AssignedToUserId,
             cancellationToken: cancellationToken);
 
-        if (validationError is not null)
-            return validationError;
+        if (businessRuleError is not null)
+            return businessRuleError;
 
         task.Title = request.Title!.Trim();
         task.Description = string.IsNullOrWhiteSpace(request.Description)
@@ -255,53 +234,24 @@ public class TasksController(ApplicationDbContext dbContext) : ControllerBase
         return NoContent();
     }
 
-    private async Task<ActionResult?> ValidateTaskRequestAsync(
+    private async Task<ActionResult?> ValidateTaskBusinessRulesAsync(
         Guid workspaceId,
-        string? title,
-        string? description,
-        string? status,
-        string? priority,
         Guid? assignedToUserId,
         CancellationToken cancellationToken)
     {
-        var trimmedTitle = title?.Trim();
-        var trimmedDescription = description?.Trim();
-        var trimmedStatus = status?.Trim();
-        var trimmedPriority = priority?.Trim();
         var normalizedAssignedToUserId = NormalizeOptionalGuid(assignedToUserId);
 
-        if (string.IsNullOrWhiteSpace(trimmedTitle))
-            return BadRequest("Task title is required.");
+        if (!normalizedAssignedToUserId.HasValue)
+            return null;
 
-        if (trimmedTitle.Length > 200)
-            return BadRequest("Task title must not exceed 200 characters.");
+        var assigneeIsWorkspaceMember = await dbContext.WorkspaceMembers
+            .AsNoTracking()
+            .AnyAsync(
+                wm => wm.WorkspaceId == workspaceId && wm.UserId == normalizedAssignedToUserId.Value,
+                cancellationToken);
 
-        if (!string.IsNullOrWhiteSpace(trimmedDescription) && trimmedDescription.Length > 2000)
-            return BadRequest("Task description must not exceed 2000 characters.");
-
-        if (string.IsNullOrWhiteSpace(trimmedStatus))
-            return BadRequest("Task status is required.");
-
-        if (!TaskStatuses.All.Contains(trimmedStatus))
-            return BadRequest("Invalid task status.");
-
-        if (string.IsNullOrWhiteSpace(trimmedPriority))
-            return BadRequest("Task priority is required.");
-
-        if (!TaskPriorities.All.Contains(trimmedPriority))
-            return BadRequest("Invalid task priority.");
-
-        if (normalizedAssignedToUserId.HasValue)
-        {
-            var assigneeIsWorkspaceMember = await dbContext.WorkspaceMembers
-                .AsNoTracking()
-                .AnyAsync(
-                    wm => wm.WorkspaceId == workspaceId && wm.UserId == normalizedAssignedToUserId.Value,
-                    cancellationToken);
-
-            if (!assigneeIsWorkspaceMember)
-                return BadRequest("Assigned user must be a member of the workspace.");
-        }
+        if (!assigneeIsWorkspaceMember)
+            return BadRequest("Assigned user must be a member of the workspace.");
 
         return null;
     }
