@@ -1,16 +1,28 @@
 import { create } from "zustand";
-import { createProject, getProjectsByWorkspace } from "../api/projects";
-import type { ProjectResponse } from "../types/project";
+import {
+  createProject,
+  deleteProject,
+  getProjectsByWorkspace,
+  updateProject,
+} from "../api/projects";
+import type {
+  CreateProjectRequest,
+  ProjectResponse,
+  UpdateProjectRequest,
+} from "../types/project";
 
 interface ProjectState {
   projects: ProjectResponse[];
   isLoading: boolean;
   error: string | null;
   fetchProjectsByWorkspace: (workspaceId: string) => Promise<void>;
-  addProject: (
+  addProject: (workspaceId: string, payload: CreateProjectRequest) => Promise<void>;
+  editProject: (
     workspaceId: string,
-    payload: { name: string; description?: string | null }
+    projectId: string,
+    payload: UpdateProjectRequest
   ) => Promise<void>;
+  removeProject: (workspaceId: string, projectId: string) => Promise<void>;
 }
 
 export const useProjectStore = create<ProjectState>((set) => ({
@@ -40,6 +52,46 @@ export const useProjectStore = create<ProjectState>((set) => ({
       }));
     } catch (error) {
       set({ error: "Failed to create project.", isLoading: false });
+      throw error;
+    }
+  },
+
+  editProject: async (workspaceId, projectId, payload) => {
+    set({ isLoading: true, error: null });
+
+    try {
+      await updateProject(workspaceId, projectId, payload);
+
+      set((state) => ({
+        projects: state.projects.map((project) =>
+          project.id === projectId
+            ? {
+                ...project,
+                name: payload.name,
+                description: payload.description ?? null,
+              }
+            : project
+        ),
+        isLoading: false,
+      }));
+    } catch (error) {
+      set({ error: "Failed to update project.", isLoading: false });
+      throw error;
+    }
+  },
+
+  removeProject: async (workspaceId, projectId) => {
+    set({ isLoading: true, error: null });
+
+    try {
+      await deleteProject(workspaceId, projectId);
+
+      set((state) => ({
+        projects: state.projects.filter((project) => project.id !== projectId),
+        isLoading: false,
+      }));
+    } catch (error) {
+      set({ error: "Failed to delete project.", isLoading: false });
       throw error;
     }
   },

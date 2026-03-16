@@ -8,3 +8,7 @@ export interface WorkspaceResponse {
 export interface CreateWorkspaceRequest {
   name: string;
 }
+
+export interface UpdateWorkspaceRequest {
+  name: string;
+}

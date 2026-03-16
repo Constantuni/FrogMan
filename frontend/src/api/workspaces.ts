@@ -17,3 +17,14 @@ export async function createWorkspace(
   const response = await axiosInstance.post<WorkspaceResponse>("/workspaces", payload);
   return response.data;
 }
+
+export async function updateWorkspace(
+  id: string,
+  payload: CreateWorkspaceRequest
+): Promise<void> {
+  await axiosInstance.put(`/workspaces/${id}`, payload);
+}
+
+export async function deleteWorkspace(id: string): Promise<void> {
+  await axiosInstance.delete(`/workspaces/${id}`);
+}
