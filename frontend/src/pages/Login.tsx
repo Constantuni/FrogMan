@@ -1,31 +1,31 @@
-import { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
-import { useAuthStore } from '../store/authStore';
-import api from '../api/axios.ts';
+import { useState } from "react";
+import { useNavigate } from "react-router-dom";
+import { useAuthStore } from "../store/authStore";
+import { login } from "../api/auth";
 
 const Login = () => {
   const navigate = useNavigate();
   const setAuth = useAuthStore((state) => state.setAuth);
 
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
-  const [error, setError] = useState('');
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
 
   const handleSubmit: React.FormEventHandler<HTMLFormElement> = async (e) => {
     e.preventDefault();
-    setError('');
+    setError("");
     setLoading(true);
 
     try {
-      const res = await api.post('/auth/login', { email, password });
+      const res = await login({ email, password });
 
-      setAuth(res.data.user, res.data.token);
+      setAuth(res.user, res.token);
 
-      console.log('auth response', res.data);
-      navigate('/dashboard');
+      console.log("auth response", res);
+      navigate("/dashboard");
     } catch (err: any) {
-      setError(err.response?.data?.message || 'Login failed');
+      setError(err.response?.data?.message || "Login failed");
     } finally {
       setLoading(false);
     }
@@ -37,7 +37,9 @@ const Login = () => {
         className="w-full max-w-md rounded bg-white p-8 shadow-md"
         onSubmit={handleSubmit}
       >
-        <h2 className="mb-6 text-center text-2xl font-bold text-gray-800">Login</h2>
+        <h2 className="mb-6 text-center text-2xl font-bold text-gray-800">
+          Login
+        </h2>
 
         {error && <div className="mb-4 text-red-500">{error}</div>}
 
@@ -68,14 +70,14 @@ const Login = () => {
           className="w-full rounded bg-blue-500 py-2 text-white hover:bg-blue-600 disabled:opacity-50"
           disabled={loading}
         >
-          {loading ? 'Logging in...' : 'Login'}
+          {loading ? "Logging in..." : "Login"}
         </button>
 
         <p className="mt-4 text-center text-sm text-gray-600">
-          Don&apos;t have an account?{' '}
+          Don&apos;t have an account?{" "}
           <span
             className="cursor-pointer text-blue-500 hover:underline"
-            onClick={() => navigate('/register')}
+            onClick={() => navigate("/register")}
           >
             Register
           </span>

@@ -5,10 +5,10 @@ using Microsoft.AspNetCore.Mvc;
 namespace FrogMan.Api.Controllers;
 
 [ApiController]
-[Route("api/[controller]")]
+[Route("api")]
 public class AuthController(IAuthService authService) : ControllerBase
 {
-    [HttpPost("register")]
+    [HttpPost("auth/register")]
     public async Task<IActionResult> Register(
         [FromBody] RegisterRequest request,
         CancellationToken cancellationToken)
@@ -24,7 +24,7 @@ public class AuthController(IAuthService authService) : ControllerBase
         }
     }
 
-    [HttpPost("login")]
+    [HttpPost("auth/login")]
     public async Task<IActionResult> Login(
         [FromBody] LoginRequest request,
         CancellationToken cancellationToken)

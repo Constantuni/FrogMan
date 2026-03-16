@@ -10,11 +10,11 @@ using Microsoft.EntityFrameworkCore;
 namespace FrogMan.Api.Controllers;
 
 [ApiController]
-[Route("api/[controller]")]
+[Route("api")]
 [Authorize]
 public class WorkspacesController(ApplicationDbContext dbContext) : ControllerBase
 {
-    [HttpPost]
+    [HttpPost("workspaces")]
     public async Task<ActionResult<WorkspaceResponse>> CreateWorkspace(
         [FromBody] CreateWorkspaceRequest request,
         CancellationToken cancellationToken)
@@ -45,7 +45,7 @@ public class WorkspacesController(ApplicationDbContext dbContext) : ControllerBa
             MapToResponse(workspace));
     }
 
-    [HttpGet]
+    [HttpGet("workspaces")]
     public async Task<ActionResult<List<WorkspaceResponse>>> GetMyWorkspaces(
         CancellationToken cancellationToken)
     {
@@ -67,7 +67,7 @@ public class WorkspacesController(ApplicationDbContext dbContext) : ControllerBa
         return Ok(workspaces);
     }
 
-    [HttpGet("{id:guid}")]
+    [HttpGet("workspaces/{id:guid}")]
     public async Task<ActionResult<WorkspaceResponse>> GetWorkspaceById(
         Guid id,
         CancellationToken cancellationToken)
@@ -92,7 +92,7 @@ public class WorkspacesController(ApplicationDbContext dbContext) : ControllerBa
         return Ok(workspace);
     }
 
-    [HttpPut("{id:guid}")]
+    [HttpPut("workspaces/{id:guid}")]
     public async Task<ActionResult<WorkspaceResponse>> UpdateWorkspace(
         Guid id,
         [FromBody] UpdateWorkspaceRequest request,
@@ -125,7 +125,7 @@ public class WorkspacesController(ApplicationDbContext dbContext) : ControllerBa
         return Ok(MapToResponse(workspace));
     }
 
-    [HttpDelete("{id:guid}")]
+    [HttpDelete("workspaces/{id:guid}")]
     public async Task<IActionResult> DeleteWorkspace(
         Guid id,
         CancellationToken cancellationToken)

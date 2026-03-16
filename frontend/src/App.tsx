@@ -1,17 +1,18 @@
-import React from 'react';
-import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
-import { useAuthStore } from './store/authStore';
+import { BrowserRouter as Router, Routes, Route, Navigate } from "react-router-dom";
+import { useAuthStore } from "./store/authStore";
 
-import Login from './pages/Login';
-import Register from './pages/Register';
-import Dashboard from './pages/Dashboard';
+import Login from "./pages/Login";
+import Register from "./pages/Register";
+import Dashboard from "./pages/Dashboard";
+import WorkspacePage from "./pages/WorkspacePage";
+import ProjectPage from "./pages/ProjectPage";
 
-import ProtectedRoute from './routes/ProtectedRoute';
-import PublicRoute from './routes/PublicRoute';
+import ProtectedRoute from "./routes/ProtectedRoute";
+import PublicRoute from "./routes/PublicRoute";
 
 const DefaultRedirect = () => {
   const token = useAuthStore((state) => state.token);
-  return <Navigate to={token ? '/dashboard' : '/login'} replace />;
+  return <Navigate to={token ? "/dashboard" : "/login"} replace />;
 };
 
 function App() {
@@ -42,6 +43,18 @@ function App() {
         {/* Protected routes */}
         <Route element={<ProtectedRoute />}>
           <Route path="/dashboard" element={<Dashboard />} />
+
+          {/* Workspace */}
+          <Route
+            path="/workspaces/:workspaceId"
+            element={<WorkspacePage />}
+          />
+
+          {/* Project */}
+          <Route
+            path="/workspaces/:workspaceId/projects/:projectId"
+            element={<ProjectPage />}
+          />
         </Route>
 
         {/* Fallback */}

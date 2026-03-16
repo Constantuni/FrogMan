@@ -1,16 +1,12 @@
-import { create } from 'zustand';
-import { persist } from 'zustand/middleware';
-
-interface User {
-  id: string;
-  username: string;
-  email: string;
-}
+// store/authStore.ts
+import { create } from "zustand";
+import { persist } from "zustand/middleware";
+import type { AuthUser } from "../types/auth";
 
 interface AuthState {
-  user: User | null;
+  user: AuthUser | null;
   token: string | null;
-  setAuth: (user: User, token: string) => void;
+  setAuth: (user: AuthUser, token: string) => void;
   logout: () => void;
 }
 
@@ -22,6 +18,6 @@ export const useAuthStore = create<AuthState>()(
       setAuth: (user, token) => set({ user, token }),
       logout: () => set({ user: null, token: null }),
     }),
-    { name: 'frogman-auth' }
+    { name: "frogman-auth" }
   )
 );

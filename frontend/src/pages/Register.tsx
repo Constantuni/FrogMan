@@ -1,32 +1,32 @@
-import { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
-import { useAuthStore } from '../store/authStore';
-import api from '../api/axios.ts';
+import { useState } from "react";
+import { useNavigate } from "react-router-dom";
+import { useAuthStore } from "../store/authStore";
+import { register } from "../api/auth";
 
 const Register = () => {
   const navigate = useNavigate();
   const setAuth = useAuthStore((state) => state.setAuth);
 
-  const [username, setUsername] = useState('');
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
-  const [error, setError] = useState('');
+  const [username, setUsername] = useState("");
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
 
   const handleSubmit: React.FormEventHandler<HTMLFormElement> = async (e) => {
     e.preventDefault();
-    setError('');
+    setError("");
     setLoading(true);
 
     try {
-      const res = await api.post('/auth/register', { username, email, password });
+      const res = await register({ username, email, password });
 
-      setAuth(res.data.user, res.data.token);
+      setAuth(res.user, res.token);
 
-      console.log('auth response', res.data);
-      navigate('/dashboard');
+      console.log("auth response", res);
+      navigate("/dashboard");
     } catch (err: any) {
-      setError(err.response?.data?.message || 'Registration failed');
+      setError(err.response?.data?.message || "Registration failed");
     } finally {
       setLoading(false);
     }
@@ -38,7 +38,9 @@ const Register = () => {
         className="w-full max-w-md rounded bg-white p-8 shadow-md"
         onSubmit={handleSubmit}
       >
-        <h2 className="mb-6 text-center text-2xl font-bold text-gray-800">Register</h2>
+        <h2 className="mb-6 text-center text-2xl font-bold text-gray-800">
+          Register
+        </h2>
 
         {error && <div className="mb-4 text-red-500">{error}</div>}
 
@@ -78,14 +80,14 @@ const Register = () => {
           className="w-full rounded bg-blue-500 py-2 text-white hover:bg-blue-600 disabled:opacity-50"
           disabled={loading}
         >
-          {loading ? 'Registering...' : 'Register'}
+          {loading ? "Registering..." : "Register"}
         </button>
 
         <p className="mt-4 text-center text-sm text-gray-600">
-          Already have an account?{' '}
+          Already have an account?{" "}
           <span
             className="cursor-pointer text-blue-500 hover:underline"
-            onClick={() => navigate('/login')}
+            onClick={() => navigate("/login")}
           >
             Login
           </span>
