@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { useAuthStore } from "../store/authStore";
 import { register } from "../api/auth";
 
@@ -23,7 +23,6 @@ const Register = () => {
 
       setAuth(res.user, res.token);
 
-      console.log("auth response", res);
       navigate("/dashboard");
     } catch (err: any) {
       setError(err.response?.data?.message || "Registration failed");
@@ -85,12 +84,9 @@ const Register = () => {
 
         <p className="mt-4 text-center text-sm text-gray-600">
           Already have an account?{" "}
-          <span
-            className="cursor-pointer text-blue-500 hover:underline"
-            onClick={() => navigate("/login")}
-          >
+          <Link to="/login" className="text-blue-500 hover:underline">
             Login
-          </span>
+          </Link>
         </p>
       </form>
     </div>
