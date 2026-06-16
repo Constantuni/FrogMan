@@ -26,9 +26,12 @@ if (string.IsNullOrWhiteSpace(jwtSettings.Secret))
 builder.Services.AddCors(options =>
 {
     options.AddPolicy("AllowReactApp", policy =>
-        policy.WithOrigins("http://localhost:5173")
+        //policy.WithOrigins("http://localhost:5173")
+        policy
               .AllowAnyMethod()
-              .AllowAnyHeader());
+              .AllowAnyHeader()
+              .AllowCredentials()
+              .SetIsOriginAllowed(_ => true));
 });
 
 builder.Services.AddDbContext<ApplicationDbContext>(options =>
