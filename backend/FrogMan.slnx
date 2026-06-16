@@ -1,4 +1,7 @@
 <Solution>
+  <Folder Name="/tests/">
+    <Project Path="tests/FrogMan.IntegrationTests/FrogMan.IntegrationTests.csproj" />
+  </Folder>
   <Project Path="FrogMan.Api/FrogMan.Api.csproj" />
   <Project Path="FrogMan.Application/FrogMan.Application.csproj" />
   <Project Path="FrogMan.Domain/FrogMan.Domain.csproj" />
