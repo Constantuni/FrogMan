@@ -1,6 +1,6 @@
 using FrogMan.Application.DTOs.Auth;
 
-namespace FrogMan.Application.Interfaces;
+namespace FrogMan.Application.Interfaces.Auth;
 
 public interface IAuthService
 {

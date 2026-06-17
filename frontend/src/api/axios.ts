@@ -2,7 +2,6 @@ import axios from "axios";
 import { useAuthStore } from "../store/authStore";
 
 const axiosInstance = axios.create({
-  // baseURL: "https://localhost:7212",
   baseURL: import.meta.env.VITE_API_URL,
 });
 

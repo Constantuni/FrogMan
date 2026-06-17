@@ -1,4 +1,4 @@
-namespace FrogMan.Application.Security;
+namespace FrogMan.Infrastructure.Security;
 
 public class JwtSettings
 {
