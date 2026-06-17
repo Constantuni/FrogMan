@@ -4,9 +4,11 @@ WORKDIR /src
 
 COPY . .
 
-RUN dotnet restore FrogMan.Api.csproj
+WORKDIR /src/FrogMan.Api
 
-RUN dotnet publish FrogMan.Api.csproj \
+RUN dotnet restore
+
+RUN dotnet publish \
 -c Release \
 -o /app/publish
 
