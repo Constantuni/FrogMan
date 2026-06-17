@@ -15,13 +15,13 @@ function normalizeDueDate(dueDate?: string | null): string | null {
 
 export async function getTasksByProject(projectId: string): Promise<TaskResponse[]> {
   const response = await axiosInstance.get<TaskResponse[]>(
-    `/projects/${projectId}/tasks`
+    `/api/projects/${projectId}/tasks`
   );
   return response.data;
 }
 
 export async function getTaskById(taskId: string): Promise<TaskResponse> {
-  const response = await axiosInstance.get<TaskResponse>(`/tasks/${taskId}`);
+  const response = await axiosInstance.get<TaskResponse>(`/api/tasks/${taskId}`);
   return response.data;
 }
 
@@ -37,7 +37,7 @@ export async function createTask(
   };
 
   const response = await axiosInstance.post<TaskResponse>(
-    `/projects/${projectId}/tasks`,
+    `/api/projects/${projectId}/tasks`,
     normalizedPayload
   );
 
@@ -55,9 +55,9 @@ export async function updateTask(
     dueDate: normalizeDueDate(payload.dueDate),
   };
 
-  await axiosInstance.put(`/tasks/${taskId}`, normalizedPayload);
+  await axiosInstance.put(`/api/tasks/${taskId}`, normalizedPayload);
 }
 
 export async function deleteTask(taskId: string): Promise<void> {
-  await axiosInstance.delete(`/tasks/${taskId}`);
+  await axiosInstance.delete(`/api/tasks/${taskId}`);
 }

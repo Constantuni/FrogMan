@@ -5,7 +5,7 @@ export async function getProjectsByWorkspace(
   workspaceId: string
 ): Promise<ProjectResponse[]> {
   const response = await axiosInstance.get<ProjectResponse[]>(
-    `/workspaces/${workspaceId}/projects`
+    `/api/workspaces/${workspaceId}/projects`
   );
   return response.data;
 }
@@ -25,7 +25,7 @@ export async function createProject(
   payload: CreateProjectRequest
 ): Promise<ProjectResponse> {
   const response = await axiosInstance.post<ProjectResponse>(
-    `/workspaces/${workspaceId}/projects`,
+    `/api/workspaces/${workspaceId}/projects`,
     payload
   );
   return response.data;
@@ -37,7 +37,7 @@ export async function updateProject(
   payload: CreateProjectRequest
 ): Promise<void> {
   await axiosInstance.put(
-    `/workspaces/${workspaceId}/projects/${projectId}`,
+    `/api/workspaces/${workspaceId}/projects/${projectId}`,
     payload
   );
 }

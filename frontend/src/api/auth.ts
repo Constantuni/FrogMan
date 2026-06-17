@@ -6,7 +6,7 @@ import type {
 } from "../types/auth";
 
 export async function login(payload: LoginRequest): Promise<AuthResponse> {
-  const response = await axiosInstance.post<AuthResponse>("/auth/login", payload);
+  const response = await axiosInstance.post<AuthResponse>("api/auth/login", payload);
   return response.data;
 }
 
