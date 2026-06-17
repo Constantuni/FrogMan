@@ -74,104 +74,138 @@ FrogMan: https://frog-man.vercel.app
 
 ---
 
-backend % tree -I 'bin|obj|debug'
+FrogMan % tree -I 'bin|obj|debug|Migrations|node_modules' -L 4
 .
-├── Dockerfile
-├── FrogMan.Api
-│   ├── Common
-│   │   └── ClaimsPrincipalExtensions.cs
-│   ├── Controllers
-│   │   ├── AuthController.cs
-│   │   ├── ProjectsController.cs
-│   │   ├── TasksController.cs
-│   │   └── WorkspaceController.cs
-│   ├── FrogMan.Api.csproj
-│   ├── FrogMan.Api.http
-│   ├── Program.cs
-│   ├── Properties
-│   │   └── launchSettings.json
-│   ├── appsettings.Development.json
-│   └── appsettings.json
-├── FrogMan.Application
-│   ├── DTOs
-│   │   ├── Auth
-│   │   │   ├── AuthResponse.cs
-│   │   │   ├── LoginRequest.cs
-│   │   │   └── RegisterRequest.cs
-│   │   ├── Projects
-│   │   │   ├── CreateProjectRequest.cs
-│   │   │   ├── ProjectsResponse.cs
-│   │   │   └── UpdateProjectRequest.cs
-│   │   ├── Tasks
-│   │   │   ├── CreateTaskRequest.cs
-│   │   │   ├── TaskResponse.cs
-│   │   │   └── UpdateTaskRequest.cs
-│   │   └── Workspaces
-│   │       ├── CreateWorkspaceRequest.cs
-│   │       ├── UpdateWorkspaceRequest.cs
-│   │       └── WorkspaceResponse.cs
-│   ├── FrogMan.Application.csproj
-│   ├── IApplicationAssemblyMarker.cs
-│   ├── Interfaces
-│   │   └── IAuthService.cs
-│   ├── Security
-│   │   └── JwtSettings.cs
-│   └── Validators
-│       ├── Auth
-│       │   ├── LoginRequestValidator.cs
-│       │   └── RegisterRequestValidator.cs
-│       ├── Projects
-│       │   ├── CreateProjectRequestValidator.cs
-│       │   └── UpdateProjectRequestValidator.cs
-│       ├── Tasks
-│       │   ├── CreateTaskRequestValidator.cs
-│       │   └── UpdateTaskRequestValidator.cs
-│       └── Workspaces
-│           ├── CreateWorkspaceRequestValidator.cs
-│           └── UpdateWorkspaceRequestValidator.cs
-├── FrogMan.Domain
-│   ├── Constants
-│   │   ├── TaskPriorities.cs
-│   │   ├── TaskStatuses.cs
-│   │   └── WorkspaceRoles.cs
-│   ├── Entities
-│   │   ├── Project.cs
-│   │   ├── TaskItem.cs
-│   │   ├── User.cs
-│   │   ├── Workspace.cs
-│   │   └── WorkspaceMember.cs
-│   └── FrogMan.Domain.csproj
-├── FrogMan.Infrastructure
-│   ├── Auth
-│   │   └── AuthService.cs
-│   ├── FrogMan.Infrastructure.csproj
-│   ├── Migrations
-│   │   ├── 20260309233201_InitialPostgresCreate.Designer.cs
-│   │   ├── 20260309233201_InitialPostgresCreate.cs
-│   │   ├── 20260311145800_AddWorkspaceProjectTaskEntities.Designer.cs
-│   │   ├── 20260311145800_AddWorkspaceProjectTaskEntities.cs
-│   │   ├── 20260313170000_AddUpdatedAtToTaskItem.Designer.cs
-│   │   ├── 20260313170000_AddUpdatedAtToTaskItem.cs
-│   │   └── ApplicationDbContextModelSnapshot.cs
-│   ├── Persistence
-│   │   └── ApplicationDbContext.cs
-│   └── Services
-│       └── TaskService.cs
-├── FrogMan.slnx
-├── build.log
-├── pp.xml
-└── tests
-    ├── FrogMan.IntegrationTests
-    │   └── FrogMan.IntegrationTests.csproj
-    └── FrogMan.UnitTests
-        ├── FrogMan.UnitTests.csproj
-        └── Validators
-            ├── Auth
-            │   └── RegisterRequestValidatorTests.cs
-            ├── Projects
-            ├── Tasks
-            │   └── CreateTaskRequestValidatorTests.cs
-            └── Workspaces
-                └── CreateWorkspaceRequestValidatorTests.cs
+├── README.md
+├── backend
+│   ├── Dockerfile
+│   ├── FrogMan.Api
+│   │   ├── Common
+│   │   │   └── ClaimsPrincipalExtensions.cs
+│   │   ├── Controllers
+│   │   │   ├── AuthController.cs
+│   │   │   ├── ProjectsController.cs
+│   │   │   ├── TasksController.cs
+│   │   │   └── WorkspaceController.cs
+│   │   ├── FrogMan.Api.csproj
+│   │   ├── FrogMan.Api.http
+│   │   ├── Program.cs
+│   │   ├── Properties
+│   │   │   └── launchSettings.json
+│   │   ├── appsettings.Development.json
+│   │   └── appsettings.json
+│   ├── FrogMan.Application
+│   │   ├── DTOs
+│   │   │   ├── Auth
+│   │   │   ├── Projects
+│   │   │   ├── Tasks
+│   │   │   └── Workspaces
+│   │   ├── DependencyInjection.cs
+│   │   ├── FrogMan.Application.csproj
+│   │   ├── IApplicationAssemblyMarker.cs
+│   │   ├── Interfaces
+│   │   │   ├── Auth
+│   │   │   ├── Repositories
+│   │   │   └── Security
+│   │   ├── Services
+│   │   │   └── AuthService.cs
+│   │   └── Validators
+│   │       ├── Auth
+│   │       ├── Projects
+│   │       ├── Tasks
+│   │       └── Workspaces
+│   ├── FrogMan.Domain
+│   │   ├── Constants
+│   │   │   ├── TaskPriorities.cs
+│   │   │   ├── TaskStatuses.cs
+│   │   │   └── WorkspaceRoles.cs
+│   │   ├── Entities
+│   │   │   ├── Project.cs
+│   │   │   ├── TaskItem.cs
+│   │   │   ├── User.cs
+│   │   │   ├── Workspace.cs
+│   │   │   └── WorkspaceMember.cs
+│   │   ├── FrogMan.Domain.csproj
+│   │   └── Rules
+│   ├── FrogMan.Infrastructure
+│   │   ├── DependencyInjection.cs
+│   │   ├── FrogMan.Infrastructure.csproj
+│   │   ├── Persistence
+│   │   │   ├── ApplicationDbContext.cs
+│   │   │   ├── Configurations
+│   │   │   └── UnitOfWork.cs
+│   │   ├── Repositories
+│   │   │   ├── UserRepository.cs
+│   │   │   └── WorkspaceRepository.cs
+│   │   └── Security
+│   │       ├── BcryptPasswordHasher.cs
+│   │       ├── JwtSettings.cs
+│   │       └── JwtTokenGenerator.cs
+│   ├── FrogMan.slnx
+│   ├── build.log
+│   ├── pp.xml
+│   └── tests
+│       ├── FrogMan.IntegrationTests
+│       │   └── FrogMan.IntegrationTests.csproj
+│       └── FrogMan.UnitTests
+│           ├── FrogMan.UnitTests.csproj
+│           └── Validators
+├── docker-compose.yml
+└── frontend
+    ├── README.md
+    ├── dist
+    │   ├── assets
+    │   │   ├── index-Ce860NeA.js
+    │   │   └── index-DQRMgR4v.css
+    │   ├── frogicon.png
+    │   ├── index.html
+    │   └── vite.svg
+    ├── eslint.config.js
+    ├── index.html
+    ├── package-lock.json
+    ├── package.json
+    ├── public
+    │   ├── frogicon.png
+    │   └── vite.svg
+    ├── src
+    │   ├── App.css
+    │   ├── App.tsx
+    │   ├── api
+    │   │   ├── auth.ts
+    │   │   ├── axios.ts
+    │   │   ├── projects.ts
+    │   │   ├── tasks.ts
+    │   │   └── workspaces.ts
+    │   ├── components
+    │   │   ├── layout
+    │   │   ├── projects
+    │   │   ├── tasks
+    │   │   └── workspaces
+    │   ├── index.css
+    │   ├── main.tsx
+    │   ├── pages
+    │   │   ├── Dashboard.tsx
+    │   │   ├── LoginPage.tsx
+    │   │   ├── ProjectPage.tsx
+    │   │   ├── RegisterPage.tsx
+    │   │   └── WorkspacePage.tsx
+    │   ├── routes
+    │   │   ├── ProtectedRoute.tsx
+    │   │   └── PublicRoute.tsx
+    │   ├── store
+    │   │   ├── authStore.ts
+    │   │   ├── projectStore.ts
+    │   │   ├── taskStore.ts
+    │   │   └── workspaceStore.ts
+    │   └── types
+    │       ├── auth.ts
+    │       ├── project.ts
+    │       ├── task.ts
+    │       ├── taskEnums.ts
+    │       └── workspace.ts
+    ├── tsconfig.app.json
+    ├── tsconfig.json
+    ├── tsconfig.node.json
+    └── vite.config.ts
 
 ---
