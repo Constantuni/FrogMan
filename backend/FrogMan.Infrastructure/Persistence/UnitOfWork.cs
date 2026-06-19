@@ -1,4 +1,4 @@
-using FrogMan.Application.Interfaces;
+using FrogMan.Application.Interfaces.Repositories;
 
 namespace FrogMan.Infrastructure.Persistence;
 

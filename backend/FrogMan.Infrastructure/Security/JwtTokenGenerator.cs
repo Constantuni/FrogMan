@@ -11,7 +11,6 @@ namespace FrogMan.Infrastructure.Security;
 
 public class JwtTokenGenerator : ITokenGenerator 
 {
-    // Fix: Just use JwtSettings, not JwtSettings.JwtSettings
     private readonly JwtSettings _settings;
     
     public JwtTokenGenerator(IOptions<JwtSettings> options) 

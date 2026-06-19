@@ -1,5 +1,5 @@
 using Microsoft.OpenApi;
-using Microsoft.OpenApi.Models; // Added to ensure OpenApiInfo resolves
+using Microsoft.OpenApi.Models;
 using FrogMan.Application;
 using FrogMan.Infrastructure;
 
@@ -13,7 +13,6 @@ builder.Services.AddInfrastructure(builder.Configuration);
 builder.Services.AddCors(options =>
 {
     options.AddPolicy("AllowReactApp", policy =>
-        //policy.WithOrigins("http://localhost:5173")
         policy.AllowAnyMethod()
               .AllowAnyHeader()
               .AllowCredentials()

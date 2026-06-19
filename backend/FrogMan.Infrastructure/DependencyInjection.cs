@@ -19,7 +19,13 @@ public static class DependencyInjection
     {
         // 1. Database Context
         services.AddDbContext<ApplicationDbContext>(options =>
-            options.UseNpgsql(configuration.GetConnectionString("DefaultConnection")));
+            options.UseNpgsql(configuration.GetConnectionString("DefaultConnection"),
+                npgsqlOptions =>
+                {
+                    npgsqlOptions.CommandTimeout((int)TimeSpan.FromMinutes(3).TotalSeconds);                
+                }
+            )
+        );
 
         // 2. Repositories & Unit of Work
         services.AddScoped<IUserRepository, UserRepository>();
