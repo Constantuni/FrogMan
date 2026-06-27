@@ -1,5 +1,6 @@
 import { BrowserRouter as Router, Routes, Route, Navigate } from "react-router-dom";
 import { useAuthStore } from "./store/authStore";
+import { Analytics } from "@vercel/analytics/react"; // <-- 1. Import Vercel Analytics
 
 import Login from "./pages/LoginPage";
 import Register from "./pages/RegisterPage";
@@ -17,50 +18,54 @@ const DefaultRedirect = () => {
 
 function App() {
   return (
-    <Router>
-      <Routes>
-        <Route path="/" element={<DefaultRedirect />} />
+    <>
+      <Router>
+        <Routes>
+          <Route path="/" element={<DefaultRedirect />} />
 
-        {/* Public routes */}
-        <Route
-          path="/login"
-          element={
-            <PublicRoute>
-              <Login />
-            </PublicRoute>
-          }
-        />
-
-        <Route
-          path="/register"
-          element={
-            <PublicRoute>
-              <Register />
-            </PublicRoute>
-          }
-        />
-
-        {/* Protected routes */}
-        <Route element={<ProtectedRoute />}>
-          <Route path="/dashboard" element={<Dashboard />} />
-
-          {/* Workspace */}
+          {/* Public routes */}
           <Route
-            path="/workspaces/:workspaceId"
-            element={<WorkspacePage />}
+            path="/login"
+            element={
+              <PublicRoute>
+                <Login />
+              </PublicRoute>
+            }
           />
 
-          {/* Project */}
           <Route
-            path="/workspaces/:workspaceId/projects/:projectId"
-            element={<ProjectPage />}
+            path="/register"
+            element={
+              <PublicRoute>
+                <Register />
+              </PublicRoute>
+            }
           />
-        </Route>
 
-        {/* Fallback */}
-        <Route path="*" element={<DefaultRedirect />} />
-      </Routes>
-    </Router>
+          {/* Protected routes */}
+          <Route element={<ProtectedRoute />}>
+            <Route path="/dashboard" element={<Dashboard />} />
+
+            {/* Workspace */}
+            <Route
+              path="/workspaces/:workspaceId"
+              element={<WorkspacePage />}
+            />
+
+            {/* Project */}
+            <Route
+              path="/workspaces/:workspaceId/projects/:projectId"
+              element={<ProjectPage />}
+            />
+          </Route>
+
+          {/* Fallback */}
+          <Route path="*" element={<DefaultRedirect />} />
+        </Routes>
+      </Router>
+      
+      <Analytics />
+    </>
   );
 }
 
