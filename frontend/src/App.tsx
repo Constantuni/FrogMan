@@ -1,5 +1,6 @@
 import { BrowserRouter as Router, Routes, Route, Navigate } from "react-router-dom";
 import { useAuthStore } from "./store/authStore";
+import { Analytics } from "@vercel/analytics/react";
 
 import Login from "./pages/LoginPage";
 import Register from "./pages/RegisterPage";
@@ -60,6 +61,7 @@ function App() {
         {/* Fallback */}
         <Route path="*" element={<DefaultRedirect />} />
       </Routes>
+      <Analytics />
     </Router>
   );
 }
