@@ -1,3 +1,4 @@
+// src/pages/Dashboard.tsx
 import { useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import AppShell from "../components/layout/AppShell";

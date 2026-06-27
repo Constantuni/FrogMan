@@ -8,8 +8,7 @@ interface Props {
   onDelete: (id: string) => Promise<void>;
 }
 
-const WorkspaceList = ({ workspaces, onOpen, onUpdate, onDelete }: Props) => {
-  const [editingId, setEditingId] = useState<string | null>(null);
+const WorkspaceList = ({ workspaces = [], onOpen, onUpdate, onDelete }: Props) => {  const [editingId, setEditingId] = useState<string | null>(null);
   const [editingName, setEditingName] = useState("");
   const [error, setError] = useState("");
 
@@ -37,6 +36,12 @@ const WorkspaceList = ({ workspaces, onOpen, onUpdate, onDelete }: Props) => {
     setEditingName("");
   };
 
+  // Safety check to ensure it's an array before checking .length or .map()
+  if (!Array.isArray(workspaces)) {
+     console.error("WorkspaceList expected an array, but received:", workspaces);
+     return null; // Or return a loading spinner/error message
+  }
+  
   return (
     <section>
       <h2 className="mb-4 text-xl font-semibold text-slate-900">
