@@ -24,16 +24,18 @@ axiosInstance.interceptors.response.use(
     return response;
   },
   (error) => {
-    if (error.response && error.response.status === 401) {
-      // The token is likely expired or invalid. 
-      // 1. Clear the zustand state (which also clears localStorage due to persist)
+    const isUnauthorized = error.response && error.response.status === 401;
+    
+    // Check if the request was made to the login endpoint
+    const isLoginRequest = error.config && error.config.url?.includes('/api/auth/login');
+
+    // Only force logout/redirect if it's a 401 AND it wasn't a login attempt
+    if (isUnauthorized && !isLoginRequest) {
       useAuthStore.getState().logout();
-      
-      // 2. Force a redirect to the login page.
-      // We use window.location here because we are outside the React Router context.
       window.location.href = '/login'; 
     }
     
+    // Always reject the promise so the component's catch block can run
     return Promise.reject(error);
   }
 );
