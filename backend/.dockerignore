@@ -2,6 +2,7 @@
 **/obj
 .git
 .gitignore
+*.md
 .vs
 .vscode
 .idea

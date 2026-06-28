@@ -15,7 +15,7 @@ export async function getProjectById(
   projectId: string
 ): Promise<ProjectResponse> {
   const response = await axiosInstance.get<ProjectResponse>(
-    `/workspaces/${workspaceId}/projects/${projectId}`
+    `/api/workspaces/${workspaceId}/projects/${projectId}`
   );
   return response.data;
 }
@@ -46,5 +46,5 @@ export async function deleteProject(
   workspaceId: string,
   projectId: string
 ): Promise<void> {
-  await axiosInstance.delete(`/workspaces/${workspaceId}/projects/${projectId}`);
+  await axiosInstance.delete(`/api/workspaces/${workspaceId}/projects/${projectId}`);
 }
