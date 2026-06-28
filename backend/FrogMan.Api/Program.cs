@@ -11,13 +11,15 @@ builder.Services.AddApplication();
 builder.Services.AddInfrastructure(builder.Configuration);
 
 // API SPECIFIC SETUP
+var frontendUrls = builder.Configuration["FrontendUrls"]?.Split(',') 
+                   ?? Array.Empty<string>();
 builder.Services.AddCors(options =>
 {
     options.AddPolicy("AllowReactApp", policy =>
         policy.AllowAnyMethod()
             .AllowAnyHeader()
             .AllowCredentials()
-            .WithOrigins("https://frog-man.vercel.app/", "http://localhost:3000"));
+            .WithOrigins(frontendUrls));
 });
 
 builder.Services.AddControllers();
