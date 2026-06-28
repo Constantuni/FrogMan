@@ -1,28 +1,29 @@
 using Microsoft.OpenApi;
 using Microsoft.OpenApi.Models;
+using Microsoft.AspNetCore.HttpOverrides;
 using FrogMan.Application;
 using FrogMan.Infrastructure;
 
 var builder = WebApplication.CreateBuilder(args);
 
-// --- 1. ADD LAYERS ---
+// ADD LAYERS
 builder.Services.AddApplication();
 builder.Services.AddInfrastructure(builder.Configuration);
 
-// --- 2. API SPECIFIC SETUP ---
+// API SPECIFIC SETUP
 builder.Services.AddCors(options =>
 {
     options.AddPolicy("AllowReactApp", policy =>
         policy.AllowAnyMethod()
-              .AllowAnyHeader()
-              .AllowCredentials()
-              .SetIsOriginAllowed(_ => true));
+            .AllowAnyHeader()
+            .AllowCredentials()
+            .WithOrigins("https://frog-man.vercel.app/", "http://localhost:3000"));
 });
 
 builder.Services.AddControllers();
 builder.Services.AddEndpointsApiExplorer();
 
-// --- EXACT OLD SWAGGER SETUP ---
+// SWAGGER SETUP
 builder.Services.AddSwaggerGen(options =>
 {
     const string schemeId = "Bearer";
@@ -59,13 +60,20 @@ builder.Services.AddSwaggerGen(options =>
         });
 });
 
+// PORT SETUP
 var port = Environment.GetEnvironmentVariable("PORT") ?? "10000";
 
 builder.WebHost.UseUrls($"http://0.0.0.0:{port}");
 
 var app = builder.Build();
 
-// --- 3. HTTP PIPELINE ---
+// Trust the headers sent by Render's load balancer
+app.UseForwardedHeaders(new ForwardedHeadersOptions
+{
+    ForwardedHeaders = ForwardedHeaders.XForwardedProto
+});
+
+// HTTP PIPELINE
 app.UseSwagger();
 app.UseSwaggerUI();
 
