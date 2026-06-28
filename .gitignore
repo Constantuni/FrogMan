@@ -56,3 +56,5 @@ docker-compose.yml
 /wwwroot/node_modules
 
 .fake
+frontend/.env
+frontend/.env.development
