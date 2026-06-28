@@ -19,3 +19,12 @@ export interface AuthResponse {
   user: AuthUser;
   token: string;
 }
+
+export interface ApiErrorResponse {
+  type?: string;
+  title?: string;
+  status?: number;
+  traceId?: string;
+  errors?: Record<string, string[]>;
+  message?: string;
+}
