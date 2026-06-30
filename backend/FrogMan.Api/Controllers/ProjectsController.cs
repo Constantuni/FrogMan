@@ -1,10 +1,7 @@
 // backend/FrogMan.Api/Controllers/ProjectsController.cs
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.EntityFrameworkCore;
-using FrogMan.Domain.Entities;
 using FrogMan.Application.DTOs.Projects;
-using FrogMan.Infrastructure.Persistence;
 using FrogMan.Application.Interfaces.Services;
 using FrogMan.Api.Common;
 
@@ -13,7 +10,7 @@ namespace FrogMan.Api.Controllers;
 [ApiController]
 [Route("api")]
 [Authorize]
-public class ProjectsController(ApplicationDbContext dbContext) : ControllerBase
+public class ProjectsController(IProjectService projectService) : ControllerBase
 {
     [HttpPost("workspaces/{workspaceId:guid}/projects")]
     public async Task<ActionResult<ProjectResponse>> CreateProject(
@@ -23,39 +20,16 @@ public class ProjectsController(ApplicationDbContext dbContext) : ControllerBase
     {
         var userId = User.GetUserId();
 
-        var isWorkspaceMember = await dbContext.WorkspaceMembers
-            .AsNoTracking()
-            .AnyAsync(
-                wm => wm.WorkspaceId == workspaceId && wm.UserId == userId,
-                cancellationToken);
+        var response = await projectService.CreateProjectAsync(
+            workspaceId, 
+            userId, 
+            request, 
+            cancellationToken);
 
-        if (!isWorkspaceMember)
-            return NotFound();
+        if (response is null)
+            return NotFound(); // Indicates either the workspace doesn't exist or user lacks access
 
-        var project = new Project
-        {
-            Name = request.Name.Trim(),
-            Description = string.IsNullOrWhiteSpace(request.Description)
-                ? null
-                : request.Description.Trim(),
-            WorkspaceId = workspaceId,
-            CreatedByUserId = userId
-        };
-
-        dbContext.Projects.Add(project);
-        await dbContext.SaveChangesAsync(cancellationToken);
-
-        var response = new ProjectResponse
-        {
-            Id = project.Id,
-            Name = project.Name,
-            Description = project.Description,
-            WorkspaceId = project.WorkspaceId,
-            CreatedByUserId = project.CreatedByUserId,
-            CreatedAt = project.CreatedAt
-        };
-
-        return Created($"/api/workspaces/{workspaceId}/projects/{project.Id}", response);
+        return Created($"/api/workspaces/{workspaceId}/projects/{response.Id}", response);
     }
 
     [HttpGet("workspaces/{workspaceId:guid}/projects")]
@@ -65,31 +39,15 @@ public class ProjectsController(ApplicationDbContext dbContext) : ControllerBase
     {
         var userId = User.GetUserId();
 
-        var isWorkspaceMember = await dbContext.WorkspaceMembers
-            .AsNoTracking()
-            .AnyAsync(
-                wm => wm.WorkspaceId == workspaceId && wm.UserId == userId,
-                cancellationToken);
+        var response = await projectService.GetProjectsByWorkspaceAsync(
+            workspaceId, 
+            userId, 
+            cancellationToken);
 
-        if (!isWorkspaceMember)
+        if (response is null)
             return NotFound();
 
-        var projects = await dbContext.Projects
-            .AsNoTracking()
-            .Where(p => p.WorkspaceId == workspaceId)
-            .OrderByDescending(p => p.CreatedAt)
-            .Select(p => new ProjectResponse
-            {
-                Id = p.Id,
-                Name = p.Name,
-                Description = p.Description,
-                WorkspaceId = p.WorkspaceId,
-                CreatedByUserId = p.CreatedByUserId,
-                CreatedAt = p.CreatedAt
-            })
-            .ToListAsync(cancellationToken);
-
-        return Ok(projects);
+        return Ok(response);
     }
 
     [HttpGet("workspaces/{workspaceId:guid}/projects/{projectId:guid}")]
@@ -100,33 +58,16 @@ public class ProjectsController(ApplicationDbContext dbContext) : ControllerBase
     {
         var userId = User.GetUserId();
 
-        var isWorkspaceMember = await dbContext.WorkspaceMembers
-            .AsNoTracking()
-            .AnyAsync(
-                wm => wm.WorkspaceId == workspaceId && wm.UserId == userId,
-                cancellationToken);
+        var response = await projectService.GetProjectByIdAsync(
+            workspaceId, 
+            projectId, 
+            userId, 
+            cancellationToken);
 
-        if (!isWorkspaceMember)
+        if (response is null)
             return NotFound();
 
-        var project = await dbContext.Projects
-            .AsNoTracking()
-            .Where(p => p.WorkspaceId == workspaceId && p.Id == projectId)
-            .Select(p => new ProjectResponse
-            {
-                Id = p.Id,
-                Name = p.Name,
-                Description = p.Description,
-                WorkspaceId = p.WorkspaceId,
-                CreatedByUserId = p.CreatedByUserId,
-                CreatedAt = p.CreatedAt
-            })
-            .FirstOrDefaultAsync(cancellationToken);
-
-        if (project is null)
-            return NotFound();
-
-        return Ok(project);
+        return Ok(response);
     }
 
     [HttpPut("workspaces/{workspaceId:guid}/projects/{projectId:guid}")]
@@ -138,39 +79,15 @@ public class ProjectsController(ApplicationDbContext dbContext) : ControllerBase
     {
         var userId = User.GetUserId();
 
-        var isWorkspaceMember = await dbContext.WorkspaceMembers
-            .AsNoTracking()
-            .AnyAsync(
-                wm => wm.WorkspaceId == workspaceId && wm.UserId == userId,
-                cancellationToken);
+        var response = await projectService.UpdateProjectAsync(
+            workspaceId, 
+            projectId, 
+            userId, 
+            request, 
+            cancellationToken);
 
-        if (!isWorkspaceMember)
+        if (response is null)
             return NotFound();
-
-        var project = await dbContext.Projects
-            .FirstOrDefaultAsync(
-                p => p.WorkspaceId == workspaceId && p.Id == projectId,
-                cancellationToken);
-
-        if (project is null)
-            return NotFound();
-
-        project.Name = request.Name.Trim();
-        project.Description = string.IsNullOrWhiteSpace(request.Description)
-            ? null
-            : request.Description.Trim();
-
-        await dbContext.SaveChangesAsync(cancellationToken);
-
-        var response = new ProjectResponse
-        {
-            Id = project.Id,
-            Name = project.Name,
-            Description = project.Description,
-            WorkspaceId = project.WorkspaceId,
-            CreatedByUserId = project.CreatedByUserId,
-            CreatedAt = project.CreatedAt
-        };
 
         return Ok(response);
     }
@@ -183,25 +100,14 @@ public class ProjectsController(ApplicationDbContext dbContext) : ControllerBase
     {
         var userId = User.GetUserId();
 
-        var isWorkspaceMember = await dbContext.WorkspaceMembers
-            .AsNoTracking()
-            .AnyAsync(
-                wm => wm.WorkspaceId == workspaceId && wm.UserId == userId,
-                cancellationToken);
+        var succeeded = await projectService.DeleteProjectAsync(
+            workspaceId, 
+            projectId, 
+            userId, 
+            cancellationToken);
 
-        if (!isWorkspaceMember)
+        if (!succeeded)
             return NotFound();
-
-        var project = await dbContext.Projects
-            .FirstOrDefaultAsync(
-                p => p.WorkspaceId == workspaceId && p.Id == projectId,
-                cancellationToken);
-
-        if (project is null)
-            return NotFound();
-
-        dbContext.Projects.Remove(project);
-        await dbContext.SaveChangesAsync(cancellationToken);
 
         return NoContent();
     }
