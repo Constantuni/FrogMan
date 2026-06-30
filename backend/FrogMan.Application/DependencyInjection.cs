@@ -12,6 +12,7 @@ public static class DependencyInjection
     {
         // Register Application Services
         services.AddScoped<IAuthService, AuthService>();
+        services.AddScoped<IWorkspaceService, WorkspaceService>();
         services.AddScoped<IProjectService, ProjectService>();
 
         // Register FluentValidation

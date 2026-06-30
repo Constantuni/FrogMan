@@ -1,0 +1,121 @@
+using FrogMan.Domain.Constants;
+using FrogMan.Domain.Entities;
+using FrogMan.Application.DTOs.Workspaces;
+using FrogMan.Application.Interfaces.Repositories;
+using FrogMan.Application.Interfaces.Services;
+
+namespace FrogMan.Application.Services;
+
+public class WorkspaceService(
+    IWorkspaceRepository workspaceRepository, 
+    IUnitOfWork unitOfWork) : IWorkspaceService
+{
+    public async Task<WorkspaceResponse> CreateWorkspaceAsync(
+        Guid userId, 
+        CreateWorkspaceRequest request, 
+        CancellationToken cancellationToken)
+    {
+        var workspace = new Workspace
+        {
+            Name = request.Name.Trim(),
+            OwnerUserId = userId
+        };
+
+        await workspaceRepository.AddAsync(workspace, cancellationToken);
+
+        var ownerMembership = new WorkspaceMember
+        {
+            WorkspaceId = workspace.Id,
+            UserId = userId,
+            Role = WorkspaceRoles.Owner
+        };
+
+        await workspaceRepository.AddMemberAsync(ownerMembership, cancellationToken);
+        
+        await unitOfWork.SaveChangesAsync(cancellationToken);
+
+        return MapToResponse(workspace);
+    }
+
+    public async Task<List<WorkspaceResponse>> GetMyWorkspacesAsync(
+        Guid userId, 
+        CancellationToken cancellationToken)
+    {
+        var workspaces = await workspaceRepository.GetWorkspacesByUserIdAsync(userId, cancellationToken);
+
+        return workspaces.Select(MapToResponse).ToList();
+    }
+
+    public async Task<WorkspaceResponse?> GetWorkspaceByIdAsync(
+        Guid id, 
+        Guid userId, 
+        CancellationToken cancellationToken)
+    {
+        var workspace = await workspaceRepository.GetByIdWithMembersAsync(id, cancellationToken);
+
+        if (workspace is null || !workspace.Members.Any(m => m.UserId == userId))
+            return null;
+
+        return MapToResponse(workspace);
+    }
+
+    public async Task<WorkspaceResult> UpdateWorkspaceAsync(
+        Guid id, 
+        Guid userId, 
+        UpdateWorkspaceRequest request, 
+        CancellationToken cancellationToken)
+    {
+        var workspace = await workspaceRepository.GetByIdWithMembersAsync(id, cancellationToken);
+
+        if (workspace is null)
+            return WorkspaceResult.NotFound();
+
+        var isMember = workspace.Members.Any(m => m.UserId == userId);
+        if (!isMember)
+            return WorkspaceResult.NotFound();
+
+        if (workspace.OwnerUserId != userId)
+            return WorkspaceResult.Forbidden();
+
+        workspace.Name = request.Name.Trim();
+        
+        workspaceRepository.Update(workspace);
+        await unitOfWork.SaveChangesAsync(cancellationToken);
+
+        return WorkspaceResult.Success(MapToResponse(workspace));
+    }
+
+    public async Task<WorkspaceResult> DeleteWorkspaceAsync(
+        Guid id, 
+        Guid userId, 
+        CancellationToken cancellationToken)
+    {
+        var workspace = await workspaceRepository.GetByIdWithMembersAsync(id, cancellationToken);
+
+        if (workspace is null)
+            return WorkspaceResult.NotFound();
+
+        var isMember = workspace.Members.Any(m => m.UserId == userId);
+        if (!isMember)
+            return WorkspaceResult.NotFound();
+
+        if (workspace.OwnerUserId != userId)
+            return WorkspaceResult.Forbidden();
+
+        workspaceRepository.Delete(workspace);
+        await unitOfWork.SaveChangesAsync(cancellationToken);
+
+        return WorkspaceResult.Success();
+    }
+
+    private static WorkspaceResponse MapToResponse(Workspace workspace)
+    {
+        return new WorkspaceResponse
+        {
+            Id = workspace.Id,
+            Name = workspace.Name,
+            OwnerUserId = workspace.OwnerUserId,
+            CreatedAt = workspace.CreatedAt
+        };
+    }
+}

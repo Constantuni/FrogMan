@@ -27,7 +27,7 @@ public class ProjectsController(IProjectService projectService) : ControllerBase
             cancellationToken);
 
         if (response is null)
-            return NotFound(); // Indicates either the workspace doesn't exist or user lacks access
+            return NotFound();
 
         return Created($"/api/workspaces/{workspaceId}/projects/{response.Id}", response);
     }
