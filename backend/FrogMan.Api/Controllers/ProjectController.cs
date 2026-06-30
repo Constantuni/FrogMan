@@ -10,7 +10,7 @@ namespace FrogMan.Api.Controllers;
 [ApiController]
 [Route("api")]
 [Authorize]
-public class ProjectsController(IProjectService projectService) : ControllerBase
+public class ProjectController(IProjectService projectService) : ControllerBase
 {
     [HttpPost("workspaces/{workspaceId:guid}/projects")]
     public async Task<ActionResult<ProjectResponse>> CreateProject(

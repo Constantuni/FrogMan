@@ -14,6 +14,7 @@ public static class DependencyInjection
         services.AddScoped<IAuthService, AuthService>();
         services.AddScoped<IWorkspaceService, WorkspaceService>();
         services.AddScoped<IProjectService, ProjectService>();
+        services.AddScoped<ITaskService, TaskService>();
 
         // Register FluentValidation
         services.AddFluentValidationAutoValidation();

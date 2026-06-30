@@ -10,7 +10,7 @@ namespace FrogMan.Api.Controllers;
 [ApiController]
 [Route("api")]
 [Authorize]
-public class WorkspacesController(IWorkspaceService workspaceService) : ControllerBase
+public class WorkspaceController(IWorkspaceService workspaceService) : ControllerBase
 {
     [HttpPost("workspaces")]
     public async Task<ActionResult<WorkspaceResponse>> CreateWorkspace(
