@@ -5,6 +5,7 @@ import {
   getProjectsByWorkspace,
   updateProject,
 } from "../api/projects";
+import { parseApiError } from "../api/errorHelper"; // Import our helper
 import type {
   CreateProjectRequest,
   ProjectResponse,
@@ -37,7 +38,9 @@ export const useProjectStore = create<ProjectState>((set) => ({
       const projects = await getProjectsByWorkspace(workspaceId);
       set({ projects, isLoading: false });
     } catch (error) {
-      set({ error: "Failed to load projects.", isLoading: false });
+      // Use the helper to parse the standard error
+      const { title } = parseApiError(error);
+      set({ error: title, isLoading: false });
     }
   },
 
@@ -51,8 +54,10 @@ export const useProjectStore = create<ProjectState>((set) => ({
         isLoading: false,
       }));
     } catch (error) {
-      set({ error: "Failed to create project.", isLoading: false });
-      throw error;
+      const { title } = parseApiError(error);
+      set({ error: title, isLoading: false });
+      // Keep throwing so the UI (like WorkspacePage) knows the action failed
+      throw error; 
     }
   },
 
@@ -75,7 +80,8 @@ export const useProjectStore = create<ProjectState>((set) => ({
         isLoading: false,
       }));
     } catch (error) {
-      set({ error: "Failed to update project.", isLoading: false });
+      const { title } = parseApiError(error);
+      set({ error: title, isLoading: false });
       throw error;
     }
   },
@@ -91,7 +97,8 @@ export const useProjectStore = create<ProjectState>((set) => ({
         isLoading: false,
       }));
     } catch (error) {
-      set({ error: "Failed to delete project.", isLoading: false });
+      const { title } = parseApiError(error);
+      set({ error: title, isLoading: false });
       throw error;
     }
   },

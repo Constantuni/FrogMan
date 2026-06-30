@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { getWorkspaceById } from "../api/workspaces";
+import { parseApiError } from "../api/errorHelper"; // Import the standard error parser
 import AppShell from "../components/layout/AppShell";
 import CreateProjectForm from "../components/projects/CreateProjectForm";
 import ProjectList from "../components/projects/ProjectList";
@@ -18,7 +19,7 @@ const WorkspacePage = () => {
   const {
     projects,
     isLoading,
-    error,
+    error, // This comes from Zustand
     fetchProjectsByWorkspace,
     addProject,
     editProject,
@@ -39,8 +40,10 @@ const WorkspacePage = () => {
       try {
         const data = await getWorkspaceById(workspaceId);
         setWorkspace(data);
-      } catch (err: any) {
-        setWorkspaceError(err.response?.data?.message || "Failed to load workspace");
+      } catch (err) {
+        // Standardized Problem Details parsing
+        const { title } = parseApiError(err);
+        setWorkspaceError(title);
       } finally {
         setWorkspaceLoading(false);
       }
@@ -52,7 +55,11 @@ const WorkspacePage = () => {
 
   const handleCreateProject = async (payload: CreateProjectRequest) => {
     if (!workspaceId) return;
-    await addProject(workspaceId, payload);
+    try {
+      await addProject(workspaceId, payload);
+    } catch (err) {
+      // If your store throws the error, you can catch and display it here
+    }
   };
 
   const handleUpdateProject = async (
@@ -60,12 +67,20 @@ const WorkspacePage = () => {
     payload: UpdateProjectRequest
   ) => {
     if (!workspaceId) return;
-    await editProject(workspaceId, projectId, payload);
+    try {
+      await editProject(workspaceId, projectId, payload);
+    } catch (err) {
+      // Handle update errors gracefully
+    }
   };
 
   const handleDeleteProject = async (projectId: string) => {
     if (!workspaceId) return;
-    await removeProject(workspaceId, projectId);
+    try {
+      await removeProject(workspaceId, projectId);
+    } catch (err) {
+      // Handle delete errors gracefully
+    }
   };
 
   if (!workspaceId) {
@@ -91,6 +106,7 @@ const WorkspacePage = () => {
       backTo="/dashboard"
       backLabel="Back to Dashboard"
     >
+      {/* Standardized Workspace Fetch Error */}
       {workspaceError && (
         <div className="mb-6 rounded-xl border border-red-200 bg-red-50 p-4 text-red-600">
           {workspaceError}
@@ -99,8 +115,13 @@ const WorkspacePage = () => {
 
       <CreateProjectForm onCreate={handleCreateProject} />
 
+      {/* Standardized Project Store Error */}
       {isLoading && <p className="text-slate-600">Loading projects...</p>}
-      {!isLoading && error && <p className="text-red-500">{error}</p>}
+      {!isLoading && error && (
+        <div className="my-4 rounded border border-red-200 bg-red-50 p-3 text-red-600">
+          {error}
+        </div>
+      )}
 
       {!isLoading && !error && (
         <ProjectList

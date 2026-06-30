@@ -5,6 +5,7 @@ import {
   getWorkspaces,
   updateWorkspace,
 } from "../api/workspaces";
+import { parseApiError } from "../api/errorHelper"; // Import our helper
 import type {
   CreateWorkspaceRequest,
   UpdateWorkspaceRequest,
@@ -33,7 +34,9 @@ export const useWorkspaceStore = create<WorkspaceState>((set) => ({
       const workspaces = await getWorkspaces();
       set({ workspaces, isLoading: false });
     } catch (error) {
-      set({ error: "Failed to load workspaces.", isLoading: false });
+      // Parse the standardized backend error
+      const { title } = parseApiError(error);
+      set({ error: title, isLoading: false });
     }
   },
 
@@ -49,8 +52,9 @@ export const useWorkspaceStore = create<WorkspaceState>((set) => ({
         isLoading: false,
       }));
     } catch (error) {
-      set({ error: "Failed to create workspace.", isLoading: false });
-      throw error;
+      const { title } = parseApiError(error);
+      set({ error: title, isLoading: false });
+      throw error; // Propagate the error so the UI can handle local states
     }
   },
 
@@ -72,7 +76,8 @@ export const useWorkspaceStore = create<WorkspaceState>((set) => ({
         isLoading: false,
       }));
     } catch (error) {
-      set({ error: "Failed to update workspace.", isLoading: false });
+      const { title } = parseApiError(error);
+      set({ error: title, isLoading: false });
       throw error;
     }
   },
@@ -88,7 +93,8 @@ export const useWorkspaceStore = create<WorkspaceState>((set) => ({
         isLoading: false,
       }));
     } catch (error) {
-      set({ error: "Failed to delete workspace.", isLoading: false });
+      const { title } = parseApiError(error);
+      set({ error: title, isLoading: false });
       throw error;
     }
   },

@@ -12,7 +12,11 @@ const ProjectList = ({ projects, onOpen, onUpdate, onDelete }: Props) => {
   const [editingProjectId, setEditingProjectId] = useState<string | null>(null);
   const [editingProjectName, setEditingProjectName] = useState("");
   const [editingProjectDescription, setEditingProjectDescription] = useState("");
-  const [editingError, setEditingError] = useState("");
+  
+  // Split error states for field-specific and general API errors
+  const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({});
+  const [generalError, setGeneralError] = useState("");
+  
   const [updatingId, setUpdatingId] = useState<string | null>(null);
   const [deletingId, setDeletingId] = useState<string | null>(null);
 
@@ -24,35 +28,55 @@ const ProjectList = ({ projects, onOpen, onUpdate, onDelete }: Props) => {
     setEditingProjectId(projectId);
     setEditingProjectName(currentName);
     setEditingProjectDescription(currentDescription ?? "");
-    setEditingError("");
+    setFieldErrors({});
+    setGeneralError("");
   };
 
   const handleCancelEdit = () => {
     setEditingProjectId(null);
     setEditingProjectName("");
     setEditingProjectDescription("");
-    setEditingError("");
+    setFieldErrors({});
+    setGeneralError("");
   };
 
   const handleUpdateProject = async (projectId: string) => {
+    setFieldErrors({});
+    setGeneralError("");
+    
     const trimmedName = editingProjectName.trim();
+    const trimmedDesc = editingProjectDescription.trim();
+    const errors: Record<string, string> = {};
+
+    // 1. Name Validation (CascadeMode.Stop)
     if (!trimmedName) {
-      setEditingError("Project name is required.");
+      errors.name = "Project name is required.";
+    } else if (trimmedName.length > 150) {
+      errors.name = "Project name must not exceed 150 characters.";
+    }
+
+    // 2. Description Validation
+    if (trimmedDesc.length > 2000) {
+      errors.description = "Project description must not exceed 2000 characters.";
+    }
+
+    // Halt if validation fails
+    if (Object.keys(errors).length > 0) {
+      setFieldErrors(errors);
       return;
     }
 
-    setEditingError("");
     setUpdatingId(projectId);
 
     try {
       await onUpdate(projectId, {
         name: trimmedName,
-        description: editingProjectDescription.trim() || null,
+        description: trimmedDesc || null, // Send null if empty string
       });
 
       handleCancelEdit();
     } catch (err: any) {
-      setEditingError(err.response?.data?.message || "Failed to update project");
+      setGeneralError(err.response?.data?.message || "Failed to update project");
     } finally {
       setUpdatingId(null);
     }
@@ -134,22 +158,53 @@ const ProjectList = ({ projects, onOpen, onUpdate, onDelete }: Props) => {
 
                 {isEditing ? (
                   <div className="space-y-3">
-                    <input
-                      type="text"
-                      value={editingProjectName}
-                      onChange={(e) => setEditingProjectName(e.target.value)}
-                      className="w-full rounded-lg border border-slate-300 px-4 py-2 text-slate-900 outline-none transition focus:border-blue-500"
-                    />
-
-                    <textarea
-                      value={editingProjectDescription}
-                      onChange={(e) => setEditingProjectDescription(e.target.value)}
-                      className="min-h-[100px] w-full rounded-lg border border-slate-300 px-4 py-2 text-slate-900 outline-none transition focus:border-blue-500"
-                    />
-
-                    {editingError && (
-                      <p className="text-sm text-red-500">{editingError}</p>
+                    {/* General API Error for this specific card */}
+                    {generalError && (
+                      <div className="rounded border border-red-200 bg-red-50 p-2 text-sm text-red-600">
+                        {generalError}
+                      </div>
                     )}
+                    
+                    <div>
+                      <input
+                        type="text"
+                        value={editingProjectName}
+                        maxLength={150} // Hard limit at the keystroke level
+                        onChange={(e) => {
+                          setEditingProjectName(e.target.value);
+                          if (fieldErrors.name) setFieldErrors({ ...fieldErrors, name: "" });
+                        }}
+                        className={`w-full rounded-lg border px-4 py-2 text-slate-900 outline-none transition-colors ${
+                          fieldErrors.name
+                            ? "border-red-500 bg-red-50 focus:border-red-600"
+                            : "border-slate-300 focus:border-blue-500"
+                        }`}
+                        placeholder="Project Name"
+                      />
+                      {fieldErrors.name && (
+                        <p className="mt-1 text-xs text-red-500">{fieldErrors.name}</p>
+                      )}
+                    </div>
+
+                    <div>
+                      <textarea
+                        value={editingProjectDescription}
+                        maxLength={2000} // Hard limit at the keystroke level
+                        onChange={(e) => {
+                          setEditingProjectDescription(e.target.value);
+                          if (fieldErrors.description) setFieldErrors({ ...fieldErrors, description: "" });
+                        }}
+                        className={`min-h-[100px] w-full rounded-lg border px-4 py-2 text-slate-900 outline-none transition-colors ${
+                          fieldErrors.description
+                            ? "border-red-500 bg-red-50 focus:border-red-600"
+                            : "border-slate-300 focus:border-blue-500"
+                        }`}
+                        placeholder="Project Description"
+                      />
+                      {fieldErrors.description && (
+                        <p className="mt-1 text-xs text-red-500">{fieldErrors.description}</p>
+                      )}
+                    </div>
 
                     <div className="flex gap-2">
                       <button
@@ -177,11 +232,11 @@ const ProjectList = ({ projects, onOpen, onUpdate, onDelete }: Props) => {
                     onClick={() => onOpen(project.id)}
                     className="w-full text-left"
                   >
-                    <h3 className="mb-2 text-lg font-semibold text-slate-900 hover:text-blue-700">
+                    <h3 className="mb-2 truncate text-lg font-semibold text-slate-900 hover:text-blue-700 transition-colors">
                       {project.name}
                     </h3>
 
-                    <p className="mb-4 min-h-[48px] text-sm text-slate-500">
+                    <p className="mb-4 min-h-[48px] text-sm text-slate-500 line-clamp-3">
                       {project.description || "No description provided."}
                     </p>
 
@@ -189,8 +244,8 @@ const ProjectList = ({ projects, onOpen, onUpdate, onDelete }: Props) => {
                       Created at {new Date(project.createdAt).toLocaleString()}
                     </p>
 
-                    <div className="text-sm font-medium text-blue-600">
-                      Open project →
+                    <div className="text-sm font-medium text-blue-600 transition-colors hover:text-blue-800">
+                      Open project &rarr;
                     </div>
                   </button>
                 )}

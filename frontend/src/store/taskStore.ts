@@ -5,6 +5,7 @@ import {
   getTasksByProject,
   updateTask,
 } from "../api/tasks";
+import { parseApiError } from "../api/errorHelper"; // Import our helper
 import type {
   CreateTaskRequest,
   TaskResponse,
@@ -33,7 +34,9 @@ export const useTaskStore = create<TaskState>((set) => ({
       const tasks = await getTasksByProject(projectId);
       set({ tasks, isLoading: false });
     } catch (error) {
-      set({ error: "Failed to load tasks.", isLoading: false });
+      // Parse the standardized backend error
+      const { title } = parseApiError(error);
+      set({ error: title, isLoading: false });
     }
   },
 
@@ -47,8 +50,9 @@ export const useTaskStore = create<TaskState>((set) => ({
         isLoading: false,
       }));
     } catch (error) {
-      set({ error: "Failed to create task.", isLoading: false });
-      throw error;
+      const { title } = parseApiError(error);
+      set({ error: title, isLoading: false });
+      throw error; // Let the UI catch this if it needs to
     }
   },
 
@@ -76,7 +80,8 @@ export const useTaskStore = create<TaskState>((set) => ({
         isLoading: false,
       }));
     } catch (error) {
-      set({ error: "Failed to update task.", isLoading: false });
+      const { title } = parseApiError(error);
+      set({ error: title, isLoading: false });
       throw error;
     }
   },
@@ -92,7 +97,8 @@ export const useTaskStore = create<TaskState>((set) => ({
         isLoading: false,
       }));
     } catch (error) {
-      set({ error: "Failed to delete task.", isLoading: false });
+      const { title } = parseApiError(error);
+      set({ error: title, isLoading: false });
       throw error;
     }
   },

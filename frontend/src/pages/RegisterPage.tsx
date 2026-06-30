@@ -12,25 +12,83 @@ const Register = () => {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   
-  // Split error state into general and field-specific
   const [generalError, setGeneralError] = useState("");
   const [fieldErrors, setFieldErrors] = useState<Record<string, string[]>>({});
   const [loading, setLoading] = useState(false);
+
+  // Client-side validation mirroring FluentValidation rules
+  const validateForm = () => {
+    const errors: Record<string, string[]> = {};
+    let isValid = true;
+
+    // Username Validation
+    const trimmedUsername = username.trim();
+    if (!trimmedUsername) {
+      errors.username = ["Username is required."];
+      isValid = false;
+    } else if (trimmedUsername.length < 3 || trimmedUsername.length > 30) {
+      errors.username = ["Username must be between 3 and 30 characters."];
+      isValid = false;
+    } else if (!/^[a-zA-Z0-9._-]+$/.test(trimmedUsername)) {
+      errors.username = ["Username may contain letters, numbers, '.', '_' and '-' only."];
+      isValid = false;
+    }
+
+    // Email Validation
+    if (!email) {
+      errors.email = ["Email is required."];
+      isValid = false;
+    } else if (email.length > 254) {
+      errors.email = ["Email is too long."];
+      isValid = false;
+    } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+      errors.email = ["Invalid email format."];
+      isValid = false;
+    }
+
+    // Password Validation
+    if (!password) {
+      errors.password = ["Password is required."];
+      isValid = false;
+    } else if (password.length < 8) {
+      errors.password = ["Password must be at least 8 characters."];
+      isValid = false;
+    } else if (password.length > 128) {
+      errors.password = ["Password must not exceed 128 characters."];
+      isValid = false;
+    } else if (!/[A-Z]/.test(password)) {
+      errors.password = ["Password must contain at least one uppercase letter."];
+      isValid = false;
+    } else if (!/[a-z]/.test(password)) {
+      errors.password = ["Password must contain at least one lowercase letter."];
+      isValid = false;
+    } else if (!/[0-9]/.test(password)) {
+      errors.password = ["Password must contain at least one number."];
+      isValid = false;
+    }
+
+    setFieldErrors(errors);
+    return isValid;
+  };
 
   const handleSubmit: React.FormEventHandler<HTMLFormElement> = async (e) => {
     e.preventDefault();
     setGeneralError("");
     setFieldErrors({});
+
+    // Run client-side validation first
+    if (!validateForm()) {
+      return;
+    }
+
     setLoading(true);
 
     try {
-      const res = await register({ username, email, password });
+      const res = await register({ username: username.trim(), email, password });
       setAuth(res.user, res.token);
       navigate("/dashboard");
     } catch (err) {
-      // Use the helper to parse the standard error
       const { title, fieldErrors } = parseApiError(err);
-      
       setGeneralError(title);
       setFieldErrors(fieldErrors);
     } finally {
@@ -43,12 +101,12 @@ const Register = () => {
       <form
         className="w-full max-w-md rounded bg-white p-8 shadow-md"
         onSubmit={handleSubmit}
+        noValidate // Disables default browser popups to use our custom UI
       >
         <h2 className="mb-6 text-center text-2xl font-bold text-gray-800">
           Register
         </h2>
 
-        {/* General Error (e.g. "One or more validation errors occurred.") */}
         {generalError && (
           <div className="mb-4 rounded border border-red-200 bg-red-50 p-3 text-sm text-red-600">
             {generalError}
@@ -61,10 +119,10 @@ const Register = () => {
           type="text"
           value={username}
           onChange={(e) => setUsername(e.target.value)}
+          maxLength={30}
           className={`mb-1 w-full rounded border p-2 text-gray-900 ${
             fieldErrors.username ? "border-red-500 bg-red-50" : "border-gray-300"
           }`}
-          required
         />
         {fieldErrors.username && (
           <p className="mb-4 text-xs text-red-500">{fieldErrors.username[0]}</p>
@@ -77,10 +135,11 @@ const Register = () => {
           type="email"
           value={email}
           onChange={(e) => setEmail(e.target.value)}
+          maxLength={254}
           className={`mb-1 w-full rounded border p-2 text-gray-900 ${
             fieldErrors.email ? "border-red-500 bg-red-50" : "border-gray-300"
           }`}
-          required
+          autoComplete="username"
         />
         {fieldErrors.email && (
           <p className="mb-4 text-xs text-red-500">{fieldErrors.email[0]}</p>
@@ -93,10 +152,11 @@ const Register = () => {
           type="password"
           value={password}
           onChange={(e) => setPassword(e.target.value)}
+          maxLength={128}
           className={`mb-1 w-full rounded border p-2 text-gray-900 ${
             fieldErrors.password ? "border-red-500 bg-red-50" : "border-gray-300"
           }`}
-          required
+          autoComplete="current-password"
         />
         {fieldErrors.password && (
           <p className="mb-4 text-xs text-red-500">{fieldErrors.password[0]}</p>
@@ -105,7 +165,7 @@ const Register = () => {
 
         <button
           type="submit"
-          className="mt-2 w-full rounded bg-blue-500 py-2 text-white hover:bg-blue-600 disabled:opacity-50"
+          className="mt-2 w-full rounded bg-blue-500 py-2 text-white hover:bg-blue-600 disabled:opacity-50 transition-colors"
           disabled={loading}
         >
           {loading ? "Registering..." : "Register"}

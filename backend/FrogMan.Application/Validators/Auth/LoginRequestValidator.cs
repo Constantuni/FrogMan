@@ -1,3 +1,4 @@
+// backend/FrogMan.Application/Validators/Auth/LoginRequestValidator.cs
 using FluentValidation;
 using FrogMan.Application.DTOs.Auth;
 

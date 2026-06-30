@@ -2,6 +2,7 @@ using FrogMan.Application.DTOs.Auth;
 using FrogMan.Application.Interfaces.Auth;
 using FrogMan.Application.Interfaces.Repositories;
 using FrogMan.Application.Interfaces.Security;
+using FrogMan.Domain.Exceptions;
 using FrogMan.Domain.Entities;
 using FrogMan.Domain.Constants;
 
@@ -21,9 +22,9 @@ public class AuthService(
         var username = request.Username.Trim();
         var email = request.Email.Trim();
 
-        // 1. Check Business Rule (Replaces the Postgres Exception catch)
+        // 1. Check Business Rule
         if (await userRepository.ExistsAsync(email, cancellationToken))
-            throw new InvalidOperationException("Email is already in use.");
+            throw new ConflictException("Email is already in use.");
 
         // 2. Hash Password
         var passwordHash = passwordHasher.Hash(request.Password);
@@ -75,7 +76,7 @@ public class AuthService(
         var user = await userRepository.GetByEmailAsync(normalizedEmail, cancellationToken);
 
         if (user is null || !passwordHasher.Verify(password, user.PasswordHash))
-            return null;
+            throw new UnauthorizedException("Invalid email or password.");
 
         var token = tokenGenerator.GenerateToken(user);
 

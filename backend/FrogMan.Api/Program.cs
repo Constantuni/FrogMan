@@ -1,8 +1,10 @@
+// backend/FrogMan.Api/Program.cs
 using Microsoft.OpenApi;
 using Microsoft.OpenApi.Models;
 using Microsoft.AspNetCore.HttpOverrides;
 using FrogMan.Application;
 using FrogMan.Infrastructure;
+using FrogMan.Api.Middleware;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -22,8 +24,14 @@ builder.Services.AddCors(options =>
             .WithOrigins(frontendUrls));
 });
 
+// ADD CONTROLLERS
 builder.Services.AddControllers();
 builder.Services.AddEndpointsApiExplorer();
+
+
+// GLOBAL EXCEPTION HANDLER SETUP
+builder.Services.AddProblemDetails();
+builder.Services.AddExceptionHandler<GlobalExceptionHandler>();
 
 // SWAGGER SETUP
 builder.Services.AddSwaggerGen(options =>
@@ -65,7 +73,7 @@ builder.Services.AddSwaggerGen(options =>
 // PORT SETUP
 var port = Environment.GetEnvironmentVariable("PORT") ?? "10000";
 
-builder.WebHost.UseUrls($"http://0.0.0.0:{port}");
+builder.WebHost.UseUrls($"http://0.0.0.0:{port}"); // FIXXX
 
 var app = builder.Build();
 
@@ -75,15 +83,21 @@ app.UseForwardedHeaders(new ForwardedHeadersOptions
     ForwardedHeaders = ForwardedHeaders.XForwardedProto
 });
 
+// GLOBAL EXCEPTION HANDLER
+app.UseExceptionHandler();
+
 // HTTP PIPELINE
 app.UseSwagger();
 app.UseSwaggerUI();
 
+// CORS
 app.UseCors("AllowReactApp");
 
+// AUTHENTICATION & AUTHORIZATION
 app.UseAuthentication();
 app.UseAuthorization();
 
+// ROUTES
 app.MapControllers();
 app.MapGet("/health", () => Results.Ok("Healthy"));
 

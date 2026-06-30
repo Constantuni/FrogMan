@@ -14,15 +14,10 @@ public class AuthController(IAuthService authService) : ControllerBase
         [FromBody] RegisterRequest request,
         CancellationToken cancellationToken)
     {
-        try
-        {
-            var result = await authService.RegisterAsync(request, cancellationToken);
-            return Ok(result);
-        }
-        catch (InvalidOperationException ex)
-        {
-            return Conflict(new { message = ex.Message });
-        }
+        // If authService throws InvalidOperationException, 
+        // the GlobalExceptionHandler catches it and returns the standard 409 JSON.
+        var result = await authService.RegisterAsync(request, cancellationToken);
+        return Ok(result);
     }
 
     [HttpPost("auth/login")]
@@ -36,7 +31,14 @@ public class AuthController(IAuthService authService) : ControllerBase
             cancellationToken);
 
         if (result is null)
-            return Unauthorized(new { message = "Invalid email or password." });
+        {
+            // Built-in Problem() method to generate standard RFC 7807 JSON
+            return Problem(
+                title: "Unauthorized",
+                detail: "Invalid email or password.",
+                statusCode: StatusCodes.Status401Unauthorized
+            );
+        }
 
         return Ok(result);
     }

@@ -8,40 +8,52 @@ interface Props {
   onDelete: (id: string) => Promise<void>;
 }
 
-const WorkspaceList = ({ workspaces = [], onOpen, onUpdate, onDelete }: Props) => {  const [editingId, setEditingId] = useState<string | null>(null);
+const WorkspaceList = ({ workspaces = [], onOpen, onUpdate, onDelete }: Props) => {
+  const [editingId, setEditingId] = useState<string | null>(null);
   const [editingName, setEditingName] = useState("");
   const [error, setError] = useState("");
 
   const handleStartEdit = (id: string, name: string) => {
     setEditingId(id);
     setEditingName(name);
-    setError("");
+    setError(""); // Clear any previous errors
   };
 
   const handleCancel = () => {
     setEditingId(null);
     setEditingName("");
+    setError("");
   };
 
   const handleSave = async (id: string) => {
+    setError("");
     const trimmed = editingName.trim();
+
+    // Client-side validation mirroring FluentValidation (CascadeMode.Stop)
     if (!trimmed) {
-      setError("Workspace name required");
+      setError("Workspace name is required.");
+      return;
+    } else if (trimmed.length > 150) {
+      setError("Workspace name must not exceed 150 characters.");
       return;
     }
 
-    await onUpdate(id, trimmed);
-
-    setEditingId(null);
-    setEditingName("");
+    try {
+      await onUpdate(id, trimmed);
+      // Only clear state if the update succeeds
+      setEditingId(null);
+      setEditingName("");
+    } catch (err) {
+      setError("Failed to update workspace. Please try again.");
+    }
   };
 
   // Safety check to ensure it's an array before checking .length or .map()
   if (!Array.isArray(workspaces)) {
-     console.error("WorkspaceList expected an array, but received:", workspaces);
-     return null; // Or return a loading spinner/error message
+    console.error("WorkspaceList expected an array, but received:", workspaces);
+    return null; 
   }
-  
+
   return (
     <section>
       <h2 className="mb-4 text-xl font-semibold text-slate-900">
@@ -62,9 +74,9 @@ const WorkspaceList = ({ workspaces = [], onOpen, onUpdate, onDelete }: Props) =
             return (
               <div
                 key={workspace.id}
-                className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm"
+                className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm transition-shadow hover:shadow-md"
               >
-                <div className="mb-4 flex justify-between">
+                <div className="mb-4 flex items-center justify-between">
                   <span className="rounded-xl bg-blue-100 px-3 py-1 text-xs font-semibold text-blue-700">
                     Workspace
                   </span>
@@ -75,14 +87,14 @@ const WorkspaceList = ({ workspaces = [], onOpen, onUpdate, onDelete }: Props) =
                         onClick={() =>
                           handleStartEdit(workspace.id, workspace.name)
                         }
-                        className="text-xs border rounded px-3 py-1"
+                        className="rounded border border-slate-300 px-3 py-1 text-xs text-slate-600 transition-colors hover:bg-slate-50"
                       >
                         Edit
                       </button>
 
                       <button
                         onClick={() => onDelete(workspace.id)}
-                        className="text-xs bg-red-500 text-white rounded px-3 py-1"
+                        className="rounded bg-red-500 px-3 py-1 text-xs text-white transition-colors hover:bg-red-600"
                       >
                         Delete
                       </button>
@@ -95,24 +107,31 @@ const WorkspaceList = ({ workspaces = [], onOpen, onUpdate, onDelete }: Props) =
                     <input
                       value={editingName}
                       onChange={(e) => setEditingName(e.target.value)}
-                      className="w-full border rounded px-3 py-2 mb-2"
+                      maxLength={150} // Hard limit at the keystroke level
+                      autoFocus
+                      className={`mb-2 w-full rounded border px-3 py-2 text-slate-900 outline-none transition-colors ${
+                        error
+                          ? "border-red-500 bg-red-50 focus:border-red-600"
+                          : "border-slate-300 focus:border-blue-500"
+                      }`}
                     />
 
+                    {/* Inline Error State */}
                     {error && (
-                      <p className="text-red-500 text-sm mb-2">{error}</p>
+                      <p className="mb-3 text-xs text-red-500">{error}</p>
                     )}
 
                     <div className="flex gap-2">
                       <button
                         onClick={() => handleSave(workspace.id)}
-                        className="bg-blue-600 text-white px-4 py-2 rounded text-sm"
+                        className="rounded bg-blue-600 px-4 py-2 text-sm text-white transition-colors hover:bg-blue-700"
                       >
                         Save
                       </button>
 
                       <button
                         onClick={handleCancel}
-                        className="border px-4 py-2 rounded text-sm"
+                        className="rounded border border-slate-300 px-4 py-2 text-sm text-slate-700 transition-colors hover:bg-slate-50"
                       >
                         Cancel
                       </button>
@@ -120,20 +139,20 @@ const WorkspaceList = ({ workspaces = [], onOpen, onUpdate, onDelete }: Props) =
                   </>
                 ) : (
                   <button
-                    className="w-full text-left"
+                    className="w-full text-left outline-none"
                     onClick={() => onOpen(workspace.id)}
                   >
-                    <h3 className="text-lg font-semibold text-slate-900">
+                    <h3 className="truncate text-lg font-semibold text-slate-900">
                       {workspace.name}
                     </h3>
 
-                    <p className="text-sm text-slate-500 mt-2">
+                    <p className="mt-2 text-sm text-slate-500">
                       Created at{" "}
                       {new Date(workspace.createdAt).toLocaleString()}
                     </p>
 
-                    <div className="text-sm text-blue-600 mt-2">
-                      Open workspace →
+                    <div className="mt-4 text-sm font-medium text-blue-600 hover:text-blue-800 transition-colors">
+                      Open workspace &rarr;
                     </div>
                   </button>
                 )}

@@ -1,53 +1,37 @@
 FrogMan - SaaS Task Management Platform
-FrogMan is a high-performance, real-time task management solution built with a focus on scalability, maintainability, and modern architectural principles.
+FrogMan is a high-performance task management solution built with a focus on scalability, maintainability, and modern architectural principles.
 
 ---
 
 TECH STACK
 
 Frontend
-Core: React 18 + TypeScript
+Core: React 18 + TypeScript - (Deployed on Vercel)
 
 Build Tool: Vite (for ultra-fast HMR)
 
 Styling: Tailwind CSS (Utility-first CSS)
 
-State & Real-time: SignalR Client + React Hooks
-
 Backend
-Framework: ASP.NET Core 10 (C#)
+Framework: ASP.NET Core 10 (C#) - (Deployed on Render)
 
-Architecture: Clean Architecture (Domain, Application, Infrastructure, WebApi)
+Architecture: Clean Architecture (Domain, Application, Infrastructure, Api)
 
 ORM: Entity Framework Core
 
-Database: PostgreSQL
+Database: PostgreSQL - (Deployed on Neon)
 
 Auth: JWT (JSON Web Tokens) and Secure Password Hashing with BCrypt.Net-Next/4.1.0
-
-Real-time: SignalR Hubs
 
 Infrastructure & DevOps
 Containerization: Docker & Docker Compose
 
-Caching: Redis (Distributed Cache)
-
-Testing: xUnit for Unit and Integration testing
-
-CI/CD: GitHub Actions
-
-Security & Principles
-SOLID: Each class has a single responsibility.
-
-DRY: Logic is centralized in the Application layer.
-
-JWT: Stateless authentication for scalability.
-
 ---
 
-Getting Started (MacBook/VS Code)
+Getting Started
+For Development:
 1. Database & Services
-Ensure Docker Desktop is running, then spin up the infrastructure:
+Ensure Docker Desktop is running.
 
 Bash
 cd backend/FrogMan.Api
@@ -59,10 +43,10 @@ Navigate to the API directory and apply migrations:
 Bash
 cd backend/FrogMan.Api
 dotnet ef database update
-dotnet run --launch-profile https
+dotnet run dev
 
-Base API: https://frogman-0vvh.onrender.com
-Swagger UI: https://frogman-0vvh.onrender.com/swagger/index.html
+API URL: http://localhost:10000
+Swagger UI: http://localhost:10000/swagger/index.html
 
 3. Frontend Setup
 Bash
@@ -70,9 +54,17 @@ cd frontend
 npm install
 npm run dev
 
-FrogMan: https://frog-man.vercel.app
+
+For Production:
+1. Frontend
+FrogMan on Vercel: https://frog-man.vercel.app/
+
+2. Backend
+Swagger UI on Render: https://frogman-0vvh.onrender.com/swagger/index.html
 
 ---
+
+File Tree:
 
 FrogMan % tree -I 'bin|obj|debug|Migrations|node_modules' -L 4
 .

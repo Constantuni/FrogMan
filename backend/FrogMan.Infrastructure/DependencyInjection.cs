@@ -30,7 +30,7 @@ public static class DependencyInjection
         // 2. Repositories & Unit of Work
         services.AddScoped<IUserRepository, UserRepository>();
         services.AddScoped<IWorkspaceRepository, WorkspaceRepository>();
-        // services.AddScoped<IProjectRepository, ProjectRepository>(); // Add others here later
+        // services.AddScoped<IProjectRepository, ProjectRepository>();
         services.AddScoped<IUnitOfWork, UnitOfWork>();
 
         // 3. Security (Hasher and Token Generator)

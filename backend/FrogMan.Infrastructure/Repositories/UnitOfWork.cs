@@ -1,6 +1,7 @@
 using FrogMan.Application.Interfaces.Repositories;
+using FrogMan.Infrastructure.Persistence;
 
-namespace FrogMan.Infrastructure.Persistence;
+namespace FrogMan.Infrastructure.Repositories;
 
 public class UnitOfWork(ApplicationDbContext context) : IUnitOfWork
 {

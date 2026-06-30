@@ -1,7 +1,8 @@
-{/* ProjectPage.tsx */}
+// ProjectPage.tsx
 import { useEffect, useState } from "react";
 import { useParams } from "react-router-dom";
 import { getProjectById } from "../api/projects";
+import { parseApiError } from "../api/errorHelper"; // Import standard error parser
 import AppShell from "../components/layout/AppShell";
 import CreateTaskForm from "../components/tasks/CreateTaskForm";
 import TaskList from "../components/tasks/TaskList";
@@ -18,7 +19,7 @@ const ProjectPage = () => {
   const {
     tasks,
     isLoading,
-    error,
+    error, // This comes from Zustand
     fetchTasksByProject,
     addTask,
     editTask,
@@ -39,8 +40,10 @@ const ProjectPage = () => {
       try {
         const data = await getProjectById(workspaceId, projectId);
         setProject(data);
-      } catch (err: any) {
-        setProjectError(err.response?.data?.message || "Failed to load project");
+      } catch (err) {
+        // Standardized Problem Details parsing
+        const { title } = parseApiError(err);
+        setProjectError(title);
       } finally {
         setProjectLoading(false);
       }
@@ -52,14 +55,24 @@ const ProjectPage = () => {
 
   const handleCreateTask = async (payload: CreateTaskRequest) => {
     if (!projectId) return;
-    await addTask(projectId, payload);
+    try {
+      await addTask(projectId, payload);
+    } catch (err) {
+      // If your store throws the error, you can catch and display it here
+      // const { title } = parseApiError(err);
+      // alert(title); // Or use a toast/snackbar
+    }
   };
 
   const handleUpdateTask = async (
     taskId: string,
     payload: UpdateTaskRequest
   ) => {
-    await editTask(taskId, payload);
+    try {
+      await editTask(taskId, payload);
+    } catch (err) {
+      // Handle update errors gracefully
+    }
   };
 
   if (!workspaceId || !projectId) {
@@ -87,6 +100,7 @@ const ProjectPage = () => {
       backTo={`/workspaces/${workspaceId}`}
       backLabel="Back to Workspace"
     >
+      {/* Standardized Project Fetch Error */}
       {projectError && (
         <div className="mb-6 rounded-xl border border-red-200 bg-red-50 p-4 text-red-600">
           {projectError}
@@ -95,8 +109,13 @@ const ProjectPage = () => {
 
       <CreateTaskForm onCreate={handleCreateTask} />
 
+      {/* Standardized Task Store Error */}
       {isLoading && <p className="text-slate-600">Loading tasks...</p>}
-      {!isLoading && error && <p className="text-red-500">{error}</p>}
+      {!isLoading && error && (
+        <div className="my-4 rounded border border-red-200 bg-red-50 p-3 text-red-600">
+          {error}
+        </div>
+      )}
 
       {!isLoading && !error && (
         <TaskList
