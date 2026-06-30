@@ -5,7 +5,7 @@ public class Workspace
     public Guid Id { get; set; } = Guid.NewGuid();
     public string Name { get; set; } = string.Empty;
 
-    public Guid OwnerUserId { get; set; } // give a default value to this property to avoid null reference exceptions
+    public Guid OwnerUserId { get; set; }
     public User OwnerUser { get; set; } = null!;
 
     public DateTime CreatedAt { get; set; } = DateTime.UtcNow;

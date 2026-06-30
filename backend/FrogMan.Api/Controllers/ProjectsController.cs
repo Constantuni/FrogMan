@@ -1,9 +1,11 @@
+// backend/FrogMan.Api/Controllers/ProjectsController.cs
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using FrogMan.Domain.Entities;
 using FrogMan.Application.DTOs.Projects;
 using FrogMan.Infrastructure.Persistence;
+using FrogMan.Application.Interfaces.Services;
 using FrogMan.Api.Common;
 
 namespace FrogMan.Api.Controllers;

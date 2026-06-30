@@ -1,7 +1,7 @@
 using Microsoft.AspNetCore.Mvc;
 using FrogMan.Application.DTOs.Auth;
 using FrogMan.Application.Interfaces;
-using FrogMan.Application.Interfaces.Auth;
+using FrogMan.Application.Interfaces.Services;
 
 namespace FrogMan.Api.Controllers;
 

@@ -1,3 +1,4 @@
+// backend/FrogMan.Api/Common/ClaimsPrincipalExtensions.cs
 using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
 

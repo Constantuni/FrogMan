@@ -1,5 +1,5 @@
 using FrogMan.Application.DTOs.Auth;
-using FrogMan.Application.Interfaces.Auth;
+using FrogMan.Application.Interfaces.Services;
 using FrogMan.Application.Interfaces.Repositories;
 using FrogMan.Application.Interfaces.Security;
 using FrogMan.Domain.Exceptions;

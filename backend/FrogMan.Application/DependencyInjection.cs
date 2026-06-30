@@ -1,10 +1,8 @@
-
 using Microsoft.Extensions.DependencyInjection;
 using FluentValidation;
 using FluentValidation.AspNetCore;
-using FrogMan.Application.Interfaces;
-using FrogMan.Application.Interfaces.Auth;
 using FrogMan.Application.Services;
+using FrogMan.Application.Interfaces.Services;
 
 namespace FrogMan.Application;
 
@@ -14,7 +12,7 @@ public static class DependencyInjection
     {
         // Register Application Services
         services.AddScoped<IAuthService, AuthService>();
-        // services.AddScoped<IProjectService, ProjectService>();
+        services.AddScoped<IProjectService, ProjectService>();
 
         // Register FluentValidation
         services.AddFluentValidationAutoValidation();
