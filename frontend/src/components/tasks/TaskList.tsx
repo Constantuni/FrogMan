@@ -1,4 +1,6 @@
 import { useMemo, useState } from "react";
+import { useWorkspaceStore } from "../../store/workspaceStore"; // Import our workspace store
+import { parseApiError } from "../../api/errorHelper"; // Import standard error parser
 import type { TaskResponse, UpdateTaskRequest } from "../../types/task";
 import {
   TaskPriorities,
@@ -14,6 +16,9 @@ interface Props {
 }
 
 const TaskList = ({ tasks, onUpdate, onDelete }: Props) => {
+  // Consume our multi-tenant member directory and loading states
+  const { currentMembers, isLoadingMembers } = useWorkspaceStore();
+
   const [editingTaskId, setEditingTaskId] = useState<string | null>(null);
   const [editingTitle, setEditingTitle] = useState("");
   const [editingDescription, setEditingDescription] = useState("");
@@ -82,15 +87,14 @@ const TaskList = ({ tasks, onUpdate, onDelete }: Props) => {
         status: editingStatus,
         priority: editingPriority,
         assignedToUserId: editingAssignedToUserId.trim() || null,
-        dueDate: editingDueDate || null,
+        dueDate: editingDueDate ? new Date(editingDueDate).toISOString() : null, // Safely pass UTC string
       });
 
       handleCancelEdit();
     } catch (err: any) {
-      setEditingError(err.response?.data?.message || "Failed to update task");
-    } finally {
-      setUpdatingId(null);
-    }
+      const { title: errorTitle } = parseApiError(err);
+      setEditingError(errorTitle || "Failed to update task");
+    } return;
   };
 
   const handleDeleteTask = async (taskId: string) => {
@@ -139,6 +143,11 @@ const TaskList = ({ tasks, onUpdate, onDelete }: Props) => {
                 const isUpdating = updatingId === task.id;
                 const isDeleting = deletingId === task.id;
 
+                // Find human-readable user details by cross-referencing task ID string
+                const currentAssignee = currentMembers.find(
+                  (m) => m.userId === task.assignedToUserId
+                );
+
                 return (
                   <div
                     key={task.id}
@@ -146,67 +155,94 @@ const TaskList = ({ tasks, onUpdate, onDelete }: Props) => {
                   >
                     {isEditing ? (
                       <div className="space-y-3">
-                        <input
-                          type="text"
-                          value={editingTitle}
-                          onChange={(e) => setEditingTitle(e.target.value)}
-                          className="w-full rounded-lg border border-slate-300 px-4 py-2 text-sm text-slate-900 outline-none transition focus:border-blue-500"
-                        />
+                        <div>
+                          <label className="mb-1 block text-xs font-medium text-slate-500">Title</label>
+                          <input
+                            type="text"
+                            value={editingTitle}
+                            onChange={(e) => setEditingTitle(e.target.value)}
+                            className="w-full rounded-lg border border-slate-300 px-4 py-2 text-sm text-slate-900 outline-none transition focus:border-blue-500"
+                          />
+                        </div>
 
-                        <textarea
-                          value={editingDescription}
-                          onChange={(e) => setEditingDescription(e.target.value)}
-                          className="min-h-[90px] w-full rounded-lg border border-slate-300 px-4 py-2 text-sm text-slate-900 outline-none transition focus:border-blue-500"
-                        />
+                        <div>
+                          <label className="mb-1 block text-xs font-medium text-slate-500">Description</label>
+                          <textarea
+                            value={editingDescription}
+                            onChange={(e) => setEditingDescription(e.target.value)}
+                            className="min-h-[90px] w-full rounded-lg border border-slate-300 px-4 py-2 text-sm text-slate-900 outline-none transition focus:border-blue-500"
+                          />
+                        </div>
 
-                        <select
-                          value={editingStatus}
-                          onChange={(e) =>
-                            setEditingStatus(e.target.value as TaskStatus)
-                          }
-                          className="w-full rounded-lg border border-slate-300 px-4 py-2 text-sm text-slate-900 outline-none transition focus:border-blue-500"
-                        >
-                          {TaskStatuses.map((option) => (
-                            <option key={option} value={option}>
-                              {option}
-                            </option>
-                          ))}
-                        </select>
+                        <div>
+                          <label className="mb-1 block text-xs font-medium text-slate-500">Status</label>
+                          <select
+                            value={editingStatus}
+                            onChange={(e) =>
+                              setEditingStatus(e.target.value as TaskStatus)
+                            }
+                            className="w-full rounded-lg border border-slate-300 px-4 py-2 text-sm text-slate-900 outline-none transition focus:border-blue-500"
+                          >
+                            {TaskStatuses.map((option) => (
+                              <option key={option} value={option}>
+                                {option}
+                              </option>
+                            ))}
+                          </select>
+                        </div>
 
-                        <select
-                          value={editingPriority}
-                          onChange={(e) =>
-                            setEditingPriority(e.target.value as TaskPriority)
-                          }
-                          className="w-full rounded-lg border border-slate-300 px-4 py-2 text-sm text-slate-900 outline-none transition focus:border-blue-500"
-                        >
-                          {TaskPriorities.map((option) => (
-                            <option key={option} value={option}>
-                              {option}
-                            </option>
-                          ))}
-                        </select>
+                        <div>
+                          <label className="mb-1 block text-xs font-medium text-slate-500">Priority</label>
+                          <select
+                            value={editingPriority}
+                            onChange={(e) =>
+                              setEditingPriority(e.target.value as TaskPriority)
+                            }
+                            className="w-full rounded-lg border border-slate-300 px-4 py-2 text-sm text-slate-900 outline-none transition focus:border-blue-500"
+                          >
+                            {TaskPriorities.map((option) => (
+                              <option key={option} value={option}>
+                                {option}
+                              </option>
+                            ))}
+                          </select>
+                        </div>
 
-                        <input
-                          type="text"
-                          placeholder="Optional user id"
-                          value={editingAssignedToUserId}
-                          onChange={(e) => setEditingAssignedToUserId(e.target.value)}
-                          className="w-full rounded-lg border border-slate-300 px-4 py-2 text-sm text-slate-900 outline-none transition focus:border-blue-500"
-                        />
+                        <div>
+                          <label className="mb-1 block text-xs font-medium text-slate-500">Assignee</label>
+                          {isLoadingMembers ? (
+                            <p className="text-xs text-slate-400 italic">Loading members...</p>
+                          ) : (
+                            <select
+                              value={editingAssignedToUserId}
+                              onChange={(e) => setEditingAssignedToUserId(e.target.value)}
+                              className="w-full rounded-lg border border-slate-300 px-4 py-2 text-sm text-slate-900 outline-none transition focus:border-blue-500"
+                            >
+                              <option value="">Unassigned</option>
+                              {currentMembers.map((member) => (
+                                <option key={member.userId} value={member.userId}>
+                                  {member.name} ({member.email})
+                                </option>
+                              ))}
+                            </select>
+                          )}
+                        </div>
 
-                        <input
-                          type="datetime-local"
-                          value={editingDueDate}
-                          onChange={(e) => setEditingDueDate(e.target.value)}
-                          className="w-full rounded-lg border border-slate-300 px-4 py-2 text-sm text-slate-900 outline-none transition focus:border-blue-500"
-                        />
+                        <div>
+                          <label className="mb-1 block text-xs font-medium text-slate-500">Due Date</label>
+                          <input
+                            type="datetime-local"
+                            value={editingDueDate}
+                            onChange={(e) => setEditingDueDate(e.target.value)}
+                            className="w-full rounded-lg border border-slate-300 px-4 py-2 text-sm text-slate-900 outline-none transition focus:border-blue-500"
+                          />
+                        </div>
 
                         {editingError && (
-                          <p className="text-sm text-red-500">{editingError}</p>
+                          <p className="text-sm font-medium text-red-500">{editingError}</p>
                         )}
 
-                        <div className="flex flex-wrap gap-2">
+                        <div className="flex flex-wrap gap-2 pt-1">
                           <button
                             type="button"
                             onClick={() => handleUpdateTask(task.id)}
@@ -259,23 +295,29 @@ const TaskList = ({ tasks, onUpdate, onDelete }: Props) => {
 
                         <div className="space-y-1 text-xs text-slate-500">
                           <p>
-                            <span className="font-medium">Status:</span> {task.status}
+                            <span className="font-medium text-slate-700">Status:</span> {task.status}
                           </p>
                           <p>
-                            <span className="font-medium">Priority:</span> {task.priority}
+                            <span className="font-medium text-slate-700">Priority:</span> {task.priority}
                           </p>
                           <p>
-                            <span className="font-medium">Assigned:</span>{" "}
-                            {task.assignedToUserId || "Unassigned"}
+                            <span className="font-medium text-slate-700">Assigned:</span>{" "}
+                            {currentAssignee ? (
+                              <span className="font-medium text-slate-900">
+                                {currentAssignee.name} ({currentAssignee.email})
+                              </span>
+                            ) : (
+                              <span className="italic text-slate-400">Unassigned</span>
+                            )}
                           </p>
                           <p>
-                            <span className="font-medium">Due:</span>{" "}
+                            <span className="font-medium text-slate-700">Due:</span>{" "}
                             {task.dueDate
                               ? new Date(task.dueDate).toLocaleString()
                               : "No due date"}
                           </p>
                           <p>
-                            <span className="font-medium">Created:</span>{" "}
+                            <span className="font-medium text-slate-700">Created:</span>{" "}
                             {new Date(task.createdAt).toLocaleString()}
                           </p>
                         </div>

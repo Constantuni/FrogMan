@@ -17,8 +17,6 @@ public class WorkspaceRepository(ApplicationDbContext dbContext) : IWorkspaceRep
         await dbContext.WorkspaceMembers.AddAsync(member, cancellationToken);
     }
 
-    // --- Implement the missing members below ---
-
     public async Task<List<Workspace>> GetWorkspacesByUserIdAsync(Guid userId, CancellationToken cancellationToken = default)
     {
         return await dbContext.Workspaces
@@ -31,7 +29,8 @@ public class WorkspaceRepository(ApplicationDbContext dbContext) : IWorkspaceRep
     public async Task<Workspace?> GetByIdWithMembersAsync(Guid id, CancellationToken cancellationToken = default)
     {
         return await dbContext.Workspaces
-            .Include(w => w.Members) // Eagerly load members for permission checks
+            .Include(w => w.Members)
+            .ThenInclude(m => m.User) 
             .FirstOrDefaultAsync(w => w.Id == id, cancellationToken);
     }
 

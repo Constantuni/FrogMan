@@ -2,11 +2,12 @@
 import { useEffect, useState } from "react";
 import { useParams } from "react-router-dom";
 import { getProjectById } from "../api/projects";
-import { parseApiError } from "../api/errorHelper"; // Import standard error parser
+import { parseApiError } from "../api/errorHelper";
 import AppShell from "../components/layout/AppShell";
 import CreateTaskForm from "../components/tasks/CreateTaskForm";
 import TaskList from "../components/tasks/TaskList";
 import { useTaskStore } from "../store/taskStore";
+import { useWorkspaceStore } from "../store/workspaceStore";
 import type { ProjectResponse } from "../types/project";
 import type { CreateTaskRequest, UpdateTaskRequest } from "../types/task";
 
@@ -19,12 +20,14 @@ const ProjectPage = () => {
   const {
     tasks,
     isLoading,
-    error, // This comes from Zustand
+    error,
     fetchTasksByProject,
     addTask,
     editTask,
     removeTask,
   } = useTaskStore();
+
+  const { fetchMembers } = useWorkspaceStore();
 
   const [project, setProject] = useState<ProjectResponse | null>(null);
   const [projectLoading, setProjectLoading] = useState(true);
@@ -51,16 +54,15 @@ const ProjectPage = () => {
 
     loadProject();
     fetchTasksByProject(projectId);
-  }, [workspaceId, projectId, fetchTasksByProject]);
+    fetchMembers(workspaceId);
+  }, [workspaceId, projectId, fetchTasksByProject, fetchMembers]);
 
   const handleCreateTask = async (payload: CreateTaskRequest) => {
     if (!projectId) return;
     try {
       await addTask(projectId, payload);
     } catch (err) {
-      // If your store throws the error, you can catch and display it here
-      // const { title } = parseApiError(err);
-      // alert(title); // Or use a toast/snackbar
+      // Handle creation errors gracefully
     }
   };
 

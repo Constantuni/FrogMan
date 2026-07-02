@@ -1,4 +1,6 @@
 import { useState } from "react";
+import { useWorkspaceStore } from "../../store/workspaceStore";
+import { parseApiError } from "../../api/errorHelper";
 import type { CreateTaskRequest } from "../../types/task";
 import {
   TaskPriorities,
@@ -12,6 +14,8 @@ interface Props {
 }
 
 const CreateTaskForm = ({ onCreate }: Props) => {
+  const { currentMembers, isLoadingMembers } = useWorkspaceStore();
+
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
   const [status, setStatus] = useState<TaskStatus>("ToDo");
@@ -38,7 +42,7 @@ const CreateTaskForm = ({ onCreate }: Props) => {
         status,
         priority,
         assignedToUserId: assignedToUserId.trim() || null,
-        dueDate: dueDate || null,
+        dueDate: dueDate ? new Date(dueDate).toISOString() : null,
       });
 
       setTitle("");
@@ -48,7 +52,8 @@ const CreateTaskForm = ({ onCreate }: Props) => {
       setAssignedToUserId("");
       setDueDate("");
     } catch (err: any) {
-      setError(err.response?.data?.message || "Failed to create task");
+      const { title: errorTitle } = parseApiError(err);
+      setError(errorTitle || "Failed to create task");
     } finally {
       setCreating(false);
     }
@@ -121,15 +126,32 @@ const CreateTaskForm = ({ onCreate }: Props) => {
 
         <div>
           <label className="mb-2 block text-sm font-medium text-slate-700">
-            Assigned User Id
+            Assignee
           </label>
-          <input
-            type="text"
-            placeholder="Optional user id"
-            value={assignedToUserId}
-            onChange={(e) => setAssignedToUserId(e.target.value)}
-            className="w-full rounded-lg border border-slate-300 px-4 py-2 text-slate-900 outline-none transition focus:border-blue-500"
-          />
+          {isLoadingMembers ? (
+            <div className="w-full rounded-lg border border-slate-300 bg-slate-50 px-4 py-2 text-sm text-slate-500 italic">
+              Loading workspace members...
+            </div>
+          ) : (
+            <select
+              value={assignedToUserId}
+              onChange={(e) => setAssignedToUserId(e.target.value)}
+              className="w-full rounded-lg border border-slate-300 px-4 py-2 text-slate-900 outline-none transition focus:border-blue-500"
+            >
+              <option value="">Unassigned</option>
+              {currentMembers && currentMembers.length > 0 ? (
+                currentMembers.map((member) => (
+                  <option key={member.userId} value={member.userId}>
+                    {member.name} ({member.email})
+                  </option>
+                ))
+              ) : (
+                <option value="" disabled>
+                  No workspace members found
+                </option>
+              )}
+            </select>
+          )}
         </div>
 
         <div>
@@ -155,7 +177,7 @@ const CreateTaskForm = ({ onCreate }: Props) => {
         </div>
       </form>
 
-      {error && <p className="mt-3 text-sm text-red-500">{error}</p>}
+      {error && <p className="mt-3 text-sm font-medium text-red-500">{error}</p>}
     </section>
   );
 };

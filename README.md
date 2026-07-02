@@ -67,7 +67,8 @@ Swagger UI on Render: https://frogman-0vvh.onrender.com/swagger/index.html
 
 File Tree:
 
-FrogMan % tree -I 'bin|obj|debug|Migrations|node_modules' -L 4
+FrogMan % tree -I 'bin|obj|debug|Migrations|node_modules' -L 5          
+
 .
 ├── README.md
 ├── backend
@@ -77,11 +78,13 @@ FrogMan % tree -I 'bin|obj|debug|Migrations|node_modules' -L 4
 │   │   │   └── ClaimsPrincipalExtensions.cs
 │   │   ├── Controllers
 │   │   │   ├── AuthController.cs
-│   │   │   ├── ProjectsController.cs
-│   │   │   ├── TasksController.cs
+│   │   │   ├── ProjectController.cs
+│   │   │   ├── TaskController.cs
 │   │   │   └── WorkspaceController.cs
 │   │   ├── FrogMan.Api.csproj
 │   │   ├── FrogMan.Api.http
+│   │   ├── Middleware
+│   │   │   └── GlobalExceptionHandler.cs
 │   │   ├── Program.cs
 │   │   ├── Properties
 │   │   │   └── launchSettings.json
@@ -90,23 +93,58 @@ FrogMan % tree -I 'bin|obj|debug|Migrations|node_modules' -L 4
 │   ├── FrogMan.Application
 │   │   ├── DTOs
 │   │   │   ├── Auth
+│   │   │   │   ├── AuthResponse.cs
+│   │   │   │   ├── LoginRequest.cs
+│   │   │   │   └── RegisterRequest.cs
 │   │   │   ├── Projects
+│   │   │   │   ├── CreateProjectRequest.cs
+│   │   │   │   ├── ProjectsResponse.cs
+│   │   │   │   └── UpdateProjectRequest.cs
 │   │   │   ├── Tasks
+│   │   │   │   ├── CreateTaskRequest.cs
+│   │   │   │   ├── TaskResponse.cs
+│   │   │   │   └── UpdateTaskRequest.cs
 │   │   │   └── Workspaces
+│   │   │       ├── CreateWorkspaceRequest.cs
+│   │   │       ├── UpdateWorkspaceRequest.cs
+│   │   │       ├── WorkspaceResponse.cs
+│   │   │       └── WorkspaceResult.cs
 │   │   ├── DependencyInjection.cs
 │   │   ├── FrogMan.Application.csproj
 │   │   ├── IApplicationAssemblyMarker.cs
 │   │   ├── Interfaces
-│   │   │   ├── Auth
 │   │   │   ├── Repositories
-│   │   │   └── Security
+│   │   │   │   ├── IProjectRepository.cs
+│   │   │   │   ├── ITaskRepository.cs
+│   │   │   │   ├── IUnitOfWork.cs
+│   │   │   │   ├── IUserRepository.cs
+│   │   │   │   └── IWorkspaceRepository.cs
+│   │   │   ├── Security
+│   │   │   │   ├── IPasswordHasher.cs
+│   │   │   │   └── ITokenGenerator.cs
+│   │   │   └── Services
+│   │   │       ├── IAuthService.cs
+│   │   │       ├── IProjectService.cs
+│   │   │       ├── ITaskService.cs
+│   │   │       └── IWorkspaceService.cs
 │   │   ├── Services
-│   │   │   └── AuthService.cs
+│   │   │   ├── AuthService.cs
+│   │   │   ├── ProjectService.cs
+│   │   │   ├── TaskService.cs
+│   │   │   └── WorkspaceService.cs
 │   │   └── Validators
 │   │       ├── Auth
+│   │       │   ├── LoginRequestValidator.cs
+│   │       │   └── RegisterRequestValidator.cs
 │   │       ├── Projects
+│   │       │   ├── CreateProjectRequestValidator.cs
+│   │       │   └── UpdateProjectRequestValidator.cs
 │   │       ├── Tasks
+│   │       │   ├── CreateTaskRequestValidator.cs
+│   │       │   └── UpdateTaskRequestValidator.cs
 │   │       └── Workspaces
+│   │           ├── CreateWorkspaceRequestValidator.cs
+│   │           └── UpdateWorkspaceRequestValidator.cs
 │   ├── FrogMan.Domain
 │   │   ├── Constants
 │   │   │   ├── TaskPriorities.cs
@@ -118,6 +156,12 @@ FrogMan % tree -I 'bin|obj|debug|Migrations|node_modules' -L 4
 │   │   │   ├── User.cs
 │   │   │   ├── Workspace.cs
 │   │   │   └── WorkspaceMember.cs
+│   │   ├── Exceptions
+│   │   │   ├── AppException.cs
+│   │   │   ├── ConflictException.cs
+│   │   │   ├── NotFoundException.cs
+│   │   │   ├── UnauthorizedException.cs
+│   │   │   └── ValidationAppException.cs
 │   │   ├── FrogMan.Domain.csproj
 │   │   └── Rules
 │   ├── FrogMan.Infrastructure
@@ -125,9 +169,16 @@ FrogMan % tree -I 'bin|obj|debug|Migrations|node_modules' -L 4
 │   │   ├── FrogMan.Infrastructure.csproj
 │   │   ├── Persistence
 │   │   │   ├── ApplicationDbContext.cs
-│   │   │   ├── Configurations
-│   │   │   └── UnitOfWork.cs
+│   │   │   └── Configurations
+│   │   │       ├── ProjectConfiguration.cs
+│   │   │       ├── TaskItemConfiguration.cs
+│   │   │       ├── UserConfiguration.cs
+│   │   │       ├── WorkspaceConfiguration.cs
+│   │   │       └── WorkspaceMemberConfiguration.cs
 │   │   ├── Repositories
+│   │   │   ├── ProjectRepository.cs
+│   │   │   ├── TaskRepository.cs
+│   │   │   ├── UnitOfWork.cs
 │   │   │   ├── UserRepository.cs
 │   │   │   └── WorkspaceRepository.cs
 │   │   └── Security
@@ -135,7 +186,6 @@ FrogMan % tree -I 'bin|obj|debug|Migrations|node_modules' -L 4
 │   │       ├── JwtSettings.cs
 │   │       └── JwtTokenGenerator.cs
 │   ├── FrogMan.slnx
-│   ├── build.log
 │   ├── pp.xml
 │   └── tests
 │       ├── FrogMan.IntegrationTests
@@ -143,62 +193,78 @@ FrogMan % tree -I 'bin|obj|debug|Migrations|node_modules' -L 4
 │       └── FrogMan.UnitTests
 │           ├── FrogMan.UnitTests.csproj
 │           └── Validators
+│               ├── Auth
+│               ├── Projects
+│               ├── Tasks
+│               └── Workspaces
 ├── docker-compose.yml
-└── frontend
-    ├── README.md
-    ├── dist
-    │   ├── assets
-    │   │   ├── index-Ce860NeA.js
-    │   │   └── index-DQRMgR4v.css
-    │   ├── frogicon.png
-    │   ├── index.html
-    │   └── vite.svg
-    ├── eslint.config.js
-    ├── index.html
-    ├── package-lock.json
-    ├── package.json
-    ├── public
-    │   ├── frogicon.png
-    │   └── vite.svg
-    ├── src
-    │   ├── App.css
-    │   ├── App.tsx
-    │   ├── api
-    │   │   ├── auth.ts
-    │   │   ├── axios.ts
-    │   │   ├── projects.ts
-    │   │   ├── tasks.ts
-    │   │   └── workspaces.ts
-    │   ├── components
-    │   │   ├── layout
-    │   │   ├── projects
-    │   │   ├── tasks
-    │   │   └── workspaces
-    │   ├── index.css
-    │   ├── main.tsx
-    │   ├── pages
-    │   │   ├── Dashboard.tsx
-    │   │   ├── LoginPage.tsx
-    │   │   ├── ProjectPage.tsx
-    │   │   ├── RegisterPage.tsx
-    │   │   └── WorkspacePage.tsx
-    │   ├── routes
-    │   │   ├── ProtectedRoute.tsx
-    │   │   └── PublicRoute.tsx
-    │   ├── store
-    │   │   ├── authStore.ts
-    │   │   ├── projectStore.ts
-    │   │   ├── taskStore.ts
-    │   │   └── workspaceStore.ts
-    │   └── types
-    │       ├── auth.ts
-    │       ├── project.ts
-    │       ├── task.ts
-    │       ├── taskEnums.ts
-    │       └── workspace.ts
-    ├── tsconfig.app.json
-    ├── tsconfig.json
-    ├── tsconfig.node.json
-    └── vite.config.ts
+├── frontend
+│   ├── README.md
+│   ├── dist
+│   │   ├── assets
+│   │   │   ├── index-BWVNBZtL.js
+│   │   │   └── index-DZCJtx2o.css
+│   │   ├── frogicon.png
+│   │   ├── index.html
+│   │   └── vite.svg
+│   ├── eslint.config.js
+│   ├── index.html
+│   ├── package-lock.json
+│   ├── package.json
+│   ├── public
+│   │   ├── frogicon.png
+│   │   └── vite.svg
+│   ├── src
+│   │   ├── App.css
+│   │   ├── App.tsx
+│   │   ├── api
+│   │   │   ├── auth.ts
+│   │   │   ├── axios.ts
+│   │   │   ├── errorHelper.ts
+│   │   │   ├── projects.ts
+│   │   │   ├── tasks.ts
+│   │   │   └── workspaces.ts
+│   │   ├── components
+│   │   │   ├── layout
+│   │   │   │   └── AppShell.tsx
+│   │   │   ├── projects
+│   │   │   │   ├── CreateProjectForm.tsx
+│   │   │   │   └── ProjectList.tsx
+│   │   │   ├── tasks
+│   │   │   │   ├── CreateTaskForm.tsx
+│   │   │   │   └── TaskList.tsx
+│   │   │   └── workspaces
+│   │   │       ├── CreateWorkspaceForm.tsx
+│   │   │       └── WorkspaceList.tsx
+│   │   ├── index.css
+│   │   ├── main.tsx
+│   │   ├── pages
+│   │   │   ├── Dashboard.tsx
+│   │   │   ├── LoginPage.tsx
+│   │   │   ├── ProjectPage.tsx
+│   │   │   ├── RegisterPage.tsx
+│   │   │   └── WorkspacePage.tsx
+│   │   ├── routes
+│   │   │   ├── ProtectedRoute.tsx
+│   │   │   └── PublicRoute.tsx
+│   │   ├── store
+│   │   │   ├── authStore.ts
+│   │   │   ├── projectStore.ts
+│   │   │   ├── taskStore.ts
+│   │   │   └── workspaceStore.ts
+│   │   └── types
+│   │       ├── auth.ts
+│   │       ├── project.ts
+│   │       ├── task.ts
+│   │       ├── taskEnums.ts
+│   │       └── workspace.ts
+│   ├── tsconfig.app.json
+│   ├── tsconfig.json
+│   ├── tsconfig.node.json
+│   ├── vercel.json
+│   └── vite.config.ts
+└── otherLocalFiles
+    ├── defaultconnectionNeon.txt
+    └── errormessages.txt
 
----
+57 directories, 140 files

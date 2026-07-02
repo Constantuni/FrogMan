@@ -28,4 +28,9 @@ public interface IWorkspaceService
         Guid id, 
         Guid userId, 
         CancellationToken cancellationToken);
+
+    Task<List<WorkspaceMemberResponse>?> GetWorkspaceMembersAsync(
+        Guid workspaceId,
+        Guid userId,
+        CancellationToken cancellationToken);
 }

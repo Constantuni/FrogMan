@@ -12,3 +12,11 @@ export interface CreateWorkspaceRequest {
 export interface UpdateWorkspaceRequest {
   name: string;
 }
+
+export interface WorkspaceMemberResponse {
+  userId: string;
+  name: string;
+  email: string;
+  role: string;
+  joinedAt: string;
+}

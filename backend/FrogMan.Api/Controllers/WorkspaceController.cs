@@ -83,4 +83,19 @@ public class WorkspaceController(IWorkspaceService workspaceService) : Controlle
 
         return NoContent();
     }
+
+    [HttpGet("workspaces/{workspaceId:guid}/members")]
+    public async Task<ActionResult<List<WorkspaceMemberResponse>>> GetWorkspaceMembers(
+        Guid workspaceId,
+        CancellationToken cancellationToken)
+    {
+        var userId = User.GetUserId();
+        
+        var members = await workspaceService.GetWorkspaceMembersAsync(workspaceId, userId, cancellationToken);
+
+        if (members is null)
+            return NotFound();
+
+        return Ok(members);
+    }
 }

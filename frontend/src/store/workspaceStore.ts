@@ -4,19 +4,24 @@ import {
   deleteWorkspace,
   getWorkspaces,
   updateWorkspace,
+  getWorkspaceMembers,
 } from "../api/workspaces";
-import { parseApiError } from "../api/errorHelper"; // Import our helper
+import { parseApiError } from "../api/errorHelper";
 import type {
   CreateWorkspaceRequest,
   UpdateWorkspaceRequest,
   WorkspaceResponse,
+  WorkspaceMemberResponse,
 } from "../types/workspace";
 
 interface WorkspaceState {
   workspaces: WorkspaceResponse[];
+  currentMembers: WorkspaceMemberResponse[];
   isLoading: boolean;
+  isLoadingMembers: boolean;
   error: string | null;
   fetchWorkspaces: () => Promise<void>;
+  fetchMembers: (workspaceId: string) => Promise<void>;
   addWorkspace: (name: string) => Promise<void>;
   editWorkspace: (id: string, payload: UpdateWorkspaceRequest) => Promise<void>;
   removeWorkspace: (id: string) => Promise<void>;
@@ -24,7 +29,9 @@ interface WorkspaceState {
 
 export const useWorkspaceStore = create<WorkspaceState>((set) => ({
   workspaces: [],
+  currentMembers: [],
   isLoading: false,
+  isLoadingMembers: false,
   error: null,
 
   fetchWorkspaces: async () => {
@@ -34,9 +41,21 @@ export const useWorkspaceStore = create<WorkspaceState>((set) => ({
       const workspaces = await getWorkspaces();
       set({ workspaces, isLoading: false });
     } catch (error) {
-      // Parse the standardized backend error
       const { title } = parseApiError(error);
       set({ error: title, isLoading: false });
+    }
+  },
+
+  fetchMembers: async (workspaceId: string) => {
+    set({ isLoadingMembers: true, error: null });
+
+    try {
+      const members = await getWorkspaceMembers(workspaceId);
+      set({ currentMembers: members, isLoadingMembers: false });
+    } catch (error) {
+      const { title } = parseApiError(error);
+      set({ error: title, isLoadingMembers: false });
+      throw error;
     }
   },
 
@@ -54,7 +73,7 @@ export const useWorkspaceStore = create<WorkspaceState>((set) => ({
     } catch (error) {
       const { title } = parseApiError(error);
       set({ error: title, isLoading: false });
-      throw error; // Propagate the error so the UI can handle local states
+      throw error;
     }
   },
 

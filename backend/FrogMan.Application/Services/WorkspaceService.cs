@@ -108,6 +108,26 @@ public class WorkspaceService(
         return WorkspaceResult.Success();
     }
 
+    public async Task<List<WorkspaceMemberResponse>?> GetWorkspaceMembersAsync(
+    Guid workspaceId, 
+    Guid userId, 
+    CancellationToken cancellationToken)
+{
+    var workspace = await workspaceRepository.GetByIdWithMembersAsync(workspaceId, cancellationToken);
+
+    if (workspace is null || !workspace.Members.Any(m => m.UserId == userId))
+        return null;
+
+    return workspace.Members.Select(m => new WorkspaceMemberResponse
+    {
+        UserId = m.UserId,
+        Name = m.User?.Username ?? "Unknown User",
+        Email = m.User?.Email ?? string.Empty,
+        Role = m.Role,
+        JoinedAt = m.JoinedAt
+    }).ToList();
+}
+
     private static WorkspaceResponse MapToResponse(Workspace workspace)
     {
         return new WorkspaceResponse

@@ -1,5 +1,7 @@
 import axiosInstance from "./axios";
 import type { CreateWorkspaceRequest, WorkspaceResponse } from "../types/workspace";
+import type { WorkspaceMemberResponse } from '../types/workspace';
+
 
 export async function getWorkspaces(): Promise<WorkspaceResponse[]> {
   const response = await axiosInstance.get<WorkspaceResponse[]>("/api/workspaces");
@@ -28,3 +30,8 @@ export async function updateWorkspace(
 export async function deleteWorkspace(id: string): Promise<void> {
   await axiosInstance.delete(`/api/workspaces/${id}`);
 }
+
+export const getWorkspaceMembers = async (workspaceId: string): Promise<WorkspaceMemberResponse[]> => {
+  const response = await axiosInstance.get(`api/workspaces/${workspaceId}/members`);
+  return response.data;
+};
