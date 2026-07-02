@@ -43,4 +43,10 @@ public class WorkspaceRepository(ApplicationDbContext dbContext) : IWorkspaceRep
     {
         dbContext.Workspaces.Remove(workspace);
     }
+
+    public async Task<WorkspaceMember?> GetMemberAsync(Guid workspaceId, Guid userId, CancellationToken cancellationToken = default)
+{
+    return await dbContext.WorkspaceMembers
+        .FirstOrDefaultAsync(m => m.WorkspaceId == workspaceId && m.UserId == userId, cancellationToken);
+}
 }

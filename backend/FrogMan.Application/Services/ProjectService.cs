@@ -8,7 +8,7 @@ namespace FrogMan.Application.Services;
 
 public class ProjectService(
     IProjectRepository repository,
-    IWorkspaceRepository workspaceRepository) : IProjectService // Injected workspace repository
+    IWorkspaceRepository workspaceRepository) : IProjectService
 {
     // HELPER: Verifies if user belongs to workspace and returns their role
     private async Task<string?> GetUserRoleInWorkspaceAsync(Guid workspaceId, Guid userId, CancellationToken cancellationToken)

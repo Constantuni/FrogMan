@@ -10,6 +10,9 @@ public interface IWorkspaceRepository
     
     Task<List<Workspace>> GetWorkspacesByUserIdAsync(Guid userId, CancellationToken cancellationToken = default);
     Task<Workspace?> GetByIdWithMembersAsync(Guid id, CancellationToken cancellationToken = default);
+    
+    Task<WorkspaceMember?> GetMemberAsync(Guid workspaceId, Guid userId, CancellationToken cancellationToken = default);
+    
     void Update(Workspace workspace);
     void Delete(Workspace workspace);
 }
