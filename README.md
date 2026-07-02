@@ -1,5 +1,21 @@
 FrogMan - SaaS Task Management Platform
-FrogMan is a high-performance task management solution built with a focus on scalability, maintainability, and modern architectural principles.
+
+---
+
+FrogMan is an enterprise-grade, high-performance task management ecosystem built using a decoupled, multi-tenant architecture designed for massive data scalability and low-latency client experiences.
+
+The platform leverages a modern technical stack distributed across a secure backend engine and a responsive, state-managed frontend dashboard interface.
+
+Key Architectural Pillars
+Clean Architecture Domain Separation: The backend is strictly organized into decoupled layers (Domain, Application, Infrastructure, and WebAPI). This ensures that core business logic, validation structures (FluentValidation), and data contracts are completely isolated from infrastructure concerns like database management or third-party email providers.
+
+Multi-Tenant Data Isolation Strategy: Data boundaries are enforced seamlessly at the workspace level. Row-level tenancy guards protect cross-organizational boundary leaks, ensuring secure multi-user collaboration pools, granular workspace role management, and isolated assignment pathways.
+
+Decoupled and Highly Reactive Frontend: Built on Vite, React, and TypeScript, the user interface relies on an optimized, predictable unidirectional data flow managed via atomic Zustand client-side stores. This eliminates expensive, repetitive prop-drilling or bloated parent re-renders.
+
+Resilient Data Access Pipeline: The platform uses the repository and unit-of-work design patterns over an Entity Framework Core and PostgreSQL relational tracking engine. Heavy asynchronous multi-table fetches leverage database-level projection mappings to optimize server-side memory overhead and minimize connection string lockups.
+
+Comprehensive Client Validation & Security: Request integrity is handled via asymmetric JWT identity token validation, accompanied by structural client-side hard validation caps mirroring server validation rules to give users a zero-latency feedback loop.
 
 ---
 
@@ -67,8 +83,7 @@ Swagger UI on Render: https://frogman-0vvh.onrender.com/swagger/index.html
 
 File Tree:
 
-FrogMan % tree -I 'bin|obj|debug|Migrations|node_modules' -L 5          
-
+FrogMan % tree -I 'bin|obj|debug|Migrations|node_modules|otherLocalFiles' -L 5     
 .
 ├── README.md
 ├── backend
@@ -105,8 +120,10 @@ FrogMan % tree -I 'bin|obj|debug|Migrations|node_modules' -L 5
 │   │   │   │   ├── TaskResponse.cs
 │   │   │   │   └── UpdateTaskRequest.cs
 │   │   │   └── Workspaces
+│   │   │       ├── AddMemberRequest.cs
 │   │   │       ├── CreateWorkspaceRequest.cs
 │   │   │       ├── UpdateWorkspaceRequest.cs
+│   │   │       ├── WorkspaceMemberResponse.cs
 │   │   │       ├── WorkspaceResponse.cs
 │   │   │       └── WorkspaceResult.cs
 │   │   ├── DependencyInjection.cs
@@ -198,73 +215,71 @@ FrogMan % tree -I 'bin|obj|debug|Migrations|node_modules' -L 5
 │               ├── Tasks
 │               └── Workspaces
 ├── docker-compose.yml
-├── frontend
-│   ├── README.md
-│   ├── dist
-│   │   ├── assets
-│   │   │   ├── index-BWVNBZtL.js
-│   │   │   └── index-DZCJtx2o.css
-│   │   ├── frogicon.png
-│   │   ├── index.html
-│   │   └── vite.svg
-│   ├── eslint.config.js
-│   ├── index.html
-│   ├── package-lock.json
-│   ├── package.json
-│   ├── public
-│   │   ├── frogicon.png
-│   │   └── vite.svg
-│   ├── src
-│   │   ├── App.css
-│   │   ├── App.tsx
-│   │   ├── api
-│   │   │   ├── auth.ts
-│   │   │   ├── axios.ts
-│   │   │   ├── errorHelper.ts
-│   │   │   ├── projects.ts
-│   │   │   ├── tasks.ts
-│   │   │   └── workspaces.ts
-│   │   ├── components
-│   │   │   ├── layout
-│   │   │   │   └── AppShell.tsx
-│   │   │   ├── projects
-│   │   │   │   ├── CreateProjectForm.tsx
-│   │   │   │   └── ProjectList.tsx
-│   │   │   ├── tasks
-│   │   │   │   ├── CreateTaskForm.tsx
-│   │   │   │   └── TaskList.tsx
-│   │   │   └── workspaces
-│   │   │       ├── CreateWorkspaceForm.tsx
-│   │   │       └── WorkspaceList.tsx
-│   │   ├── index.css
-│   │   ├── main.tsx
-│   │   ├── pages
-│   │   │   ├── Dashboard.tsx
-│   │   │   ├── LoginPage.tsx
-│   │   │   ├── ProjectPage.tsx
-│   │   │   ├── RegisterPage.tsx
-│   │   │   └── WorkspacePage.tsx
-│   │   ├── routes
-│   │   │   ├── ProtectedRoute.tsx
-│   │   │   └── PublicRoute.tsx
-│   │   ├── store
-│   │   │   ├── authStore.ts
-│   │   │   ├── projectStore.ts
-│   │   │   ├── taskStore.ts
-│   │   │   └── workspaceStore.ts
-│   │   └── types
-│   │       ├── auth.ts
-│   │       ├── project.ts
-│   │       ├── task.ts
-│   │       ├── taskEnums.ts
-│   │       └── workspace.ts
-│   ├── tsconfig.app.json
-│   ├── tsconfig.json
-│   ├── tsconfig.node.json
-│   ├── vercel.json
-│   └── vite.config.ts
-└── otherLocalFiles
-    ├── defaultconnectionNeon.txt
-    └── errormessages.txt
+└── frontend
+    ├── README.md
+    ├── dist
+    │   ├── assets
+    │   │   ├── index-BWVNBZtL.js
+    │   │   └── index-DZCJtx2o.css
+    │   ├── frogicon.png
+    │   ├── index.html
+    │   └── vite.svg
+    ├── eslint.config.js
+    ├── index.html
+    ├── package-lock.json
+    ├── package.json
+    ├── public
+    │   ├── frogicon.png
+    │   └── vite.svg
+    ├── src
+    │   ├── App.css
+    │   ├── App.tsx
+    │   ├── api
+    │   │   ├── auth.ts
+    │   │   ├── axios.ts
+    │   │   ├── errorHelper.ts
+    │   │   ├── projects.ts
+    │   │   ├── tasks.ts
+    │   │   └── workspaces.ts
+    │   ├── components
+    │   │   ├── layout
+    │   │   │   └── AppShell.tsx
+    │   │   ├── projects
+    │   │   │   ├── CreateProjectForm.tsx
+    │   │   │   └── ProjectList.tsx
+    │   │   ├── tasks
+    │   │   │   ├── CreateTaskForm.tsx
+    │   │   │   └── TaskList.tsx
+    │   │   └── workspaces
+    │   │       ├── AddMemberForm.tsx
+    │   │       ├── CreateWorkspaceForm.tsx
+    │   │       └── WorkspaceList.tsx
+    │   ├── index.css
+    │   ├── main.tsx
+    │   ├── pages
+    │   │   ├── Dashboard.tsx
+    │   │   ├── LoginPage.tsx
+    │   │   ├── ProjectPage.tsx
+    │   │   ├── RegisterPage.tsx
+    │   │   └── WorkspacePage.tsx
+    │   ├── routes
+    │   │   ├── ProtectedRoute.tsx
+    │   │   └── PublicRoute.tsx
+    │   ├── store
+    │   │   ├── authStore.ts
+    │   │   ├── projectStore.ts
+    │   │   ├── taskStore.ts
+    │   │   └── workspaceStore.ts
+    │   └── types
+    │       ├── auth.ts
+    │       ├── project.ts
+    │       ├── task.ts
+    │       ├── taskEnums.ts
+    │       └── workspace.ts
+    ├── tsconfig.app.json
+    ├── tsconfig.json
+    ├── tsconfig.node.json
+    ├── vercel.json
+    └── vite.config.ts
 
-57 directories, 140 files
+56 directories, 141 files
