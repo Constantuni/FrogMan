@@ -5,6 +5,7 @@ import {
   getWorkspaces,
   updateWorkspace,
   getWorkspaceMembers,
+  addWorkspaceMember, // Ensure this API utility is imported
 } from "../api/workspaces";
 import { parseApiError } from "../api/errorHelper";
 import type {
@@ -23,6 +24,7 @@ interface WorkspaceState {
   fetchWorkspaces: () => Promise<void>;
   fetchMembers: (workspaceId: string) => Promise<void>;
   addWorkspace: (name: string) => Promise<void>;
+  addMember: (workspaceId: string, email: string) => Promise<void>; // Added contract item
   editWorkspace: (id: string, payload: UpdateWorkspaceRequest) => Promise<void>;
   removeWorkspace: (id: string) => Promise<void>;
 }
@@ -56,6 +58,24 @@ export const useWorkspaceStore = create<WorkspaceState>((set) => ({
       const { title } = parseApiError(error);
       set({ error: title, isLoadingMembers: false });
       throw error;
+    }
+  },
+
+  // FIXED: Implemented the missing addMember action block
+  addMember: async (workspaceId: string, email: string) => {
+    set({ isLoadingMembers: true, error: null });
+
+    try {
+      // 1. Send membership creation payload to API endpoint
+      await addWorkspaceMember(workspaceId, email);
+
+      // 2. Clear state loaders and fetch updated member list directory automatically
+      const updatedMembers = await getWorkspaceMembers(workspaceId);
+      set({ currentMembers: updatedMembers, isLoadingMembers: false });
+    } catch (error) {
+      const { title } = parseApiError(error);
+      set({ error: title, isLoadingMembers: false });
+      throw error; // Propagate up so component local catch blocks can read the title
     }
   },
 

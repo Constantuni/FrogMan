@@ -1,11 +1,14 @@
+// WorkspacePage.tsx
 import { useEffect, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { getWorkspaceById } from "../api/workspaces";
-import { parseApiError } from "../api/errorHelper"; // Import the standard error parser
+import { parseApiError } from "../api/errorHelper";
 import AppShell from "../components/layout/AppShell";
 import CreateProjectForm from "../components/projects/CreateProjectForm";
 import ProjectList from "../components/projects/ProjectList";
+import { AddMemberForm } from "../components/workspaces/AddMemberForm";
 import { useProjectStore } from "../store/projectStore";
+import { useWorkspaceStore } from "../store/workspaceStore"; // Import workspace store
 import type {
   CreateProjectRequest,
   UpdateProjectRequest,
@@ -16,15 +19,19 @@ const WorkspacePage = () => {
   const { workspaceId } = useParams<{ workspaceId: string }>();
   const navigate = useNavigate();
 
+  // Project store actions
   const {
     projects,
     isLoading,
-    error, // This comes from Zustand
+    error,
     fetchProjectsByWorkspace,
     addProject,
     editProject,
     removeProject,
   } = useProjectStore();
+
+  // Extract the fetchMembers action from the workspace store
+  const { fetchMembers } = useWorkspaceStore();
 
   const [workspace, setWorkspace] = useState<WorkspaceResponse | null>(null);
   const [workspaceLoading, setWorkspaceLoading] = useState(true);
@@ -51,14 +58,17 @@ const WorkspacePage = () => {
 
     loadWorkspace();
     fetchProjectsByWorkspace(workspaceId);
-  }, [workspaceId, fetchProjectsByWorkspace]);
+    
+    // Fire the API dispatch to populate the directory roster right on page load/refresh
+    fetchMembers(workspaceId);
+  }, [workspaceId, fetchProjectsByWorkspace, fetchMembers]); // Added fetchMembers to dependencies
 
   const handleCreateProject = async (payload: CreateProjectRequest) => {
     if (!workspaceId) return;
     try {
       await addProject(workspaceId, payload);
     } catch (err) {
-      // If your store throws the error, you can catch and display it here
+      // Handle creation errors gracefully
     }
   };
 
@@ -113,26 +123,50 @@ const WorkspacePage = () => {
         </div>
       )}
 
-      <CreateProjectForm onCreate={handleCreateProject} />
-
-      {/* Standardized Project Store Error */}
-      {isLoading && <p className="text-slate-600">Loading projects...</p>}
-      {!isLoading && error && (
-        <div className="my-4 rounded border border-red-200 bg-red-50 p-3 text-red-600">
-          {error}
+      {/* TOP SECTION: Create Project Form stays full-width right on top */}
+      {!workspaceError && !workspaceLoading && (
+        <div className="mb-6">
+          <CreateProjectForm onCreate={handleCreateProject} />
         </div>
       )}
 
-      {!isLoading && !error && (
-        <ProjectList
-          projects={projects}
-          onOpen={(projectId) =>
-            navigate(`/workspaces/${workspaceId}/projects/${projectId}`)
-          }
-          onUpdate={handleUpdateProject}
-          onDelete={handleDeleteProject}
-        />
-      )}
+      {/* BOTTOM SECTION: Two-column grid split for layout components */}
+      <div className="grid grid-cols-1 gap-6 lg:grid-cols-3 items-start">
+        
+        {/* LEFT SIDEBAR COLUMN: Compact Member Management with max-width defense */}
+        <div className="lg:col-span-1 w-full max-w-md lg:sticky lg:top-6">
+          {!workspaceError && !workspaceLoading && (
+            <AddMemberForm workspaceId={workspaceId} />
+          )}
+        </div>
+
+        {/* RIGHT MAIN COLUMN: Project Feed Index List */}
+        <div className="lg:col-span-2">
+          {isLoading && (
+            <p className="text-slate-600 bg-white p-6 rounded-2xl border border-slate-200">
+              Loading projects...
+            </p>
+          )}
+          
+          {!isLoading && error && (
+            <div className="my-4 rounded-xl border border-red-200 bg-red-50 p-4 text-red-600">
+              {error}
+            </div>
+          )}
+
+          {!isLoading && !error && (
+            <ProjectList
+              projects={projects}
+              onOpen={(projectId) =>
+                navigate(`/workspaces/${workspaceId}/projects/${projectId}`)
+              }
+              onUpdate={handleUpdateProject}
+              onDelete={handleDeleteProject}
+            />
+          )}
+        </div>
+
+      </div>
     </AppShell>
   );
 };

@@ -8,6 +8,7 @@ namespace FrogMan.Application.Services;
 
 public class WorkspaceService(
     IWorkspaceRepository workspaceRepository, 
+    IUserRepository userRepository,
     IUnitOfWork unitOfWork) : IWorkspaceService
 {
     public async Task<WorkspaceResponse> CreateWorkspaceAsync(
@@ -137,5 +138,48 @@ public class WorkspaceService(
             OwnerUserId = workspace.OwnerUserId,
             CreatedAt = workspace.CreatedAt
         };
+    }
+
+    public async Task<WorkspaceResult> AddMemberByEmailAsync(
+        Guid workspaceId, 
+        Guid ownerId, 
+        AddMemberRequest request, 
+        CancellationToken cancellationToken)
+    {
+        // 1. Fetch workspace context with its active join collection
+        var workspace = await workspaceRepository.GetByIdWithMembersAsync(workspaceId, cancellationToken);
+        if (workspace is null) 
+            return WorkspaceResult.NotFound();
+
+        // 2. Multitenant authorization guard: verify only the owner can invite others
+        if (workspace.OwnerUserId != ownerId) 
+            return WorkspaceResult.Forbidden();
+
+        // 3. Find target user by the requested email address
+        var targetUser = await userRepository.GetByEmailAsync(request.Email.Trim(), cancellationToken);
+        if (targetUser is null)
+        {
+            return WorkspaceResult.Failure("User with this email address does not exist.");
+        }
+
+        // 4. Validate that they aren't already grouped into this tenant workspace
+        var isAlreadyMember = workspace.Members.Any(m => m.UserId == targetUser.Id);
+        if (isAlreadyMember)
+        {
+            return WorkspaceResult.Failure("User is already a member of this workspace.");
+        }
+
+        // 5. Append new cross-link tracking record to the database
+        var newMembership = new WorkspaceMember
+        {
+            WorkspaceId = workspaceId,
+            UserId = targetUser.Id,
+            Role = request.Role.Trim()
+        };
+
+        await workspaceRepository.AddMemberAsync(newMembership, cancellationToken);
+        await unitOfWork.SaveChangesAsync(cancellationToken);
+
+        return WorkspaceResult.Success();
     }
 }

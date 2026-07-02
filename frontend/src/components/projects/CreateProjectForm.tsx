@@ -6,11 +6,13 @@ interface Props {
 }
 
 const CreateProjectForm = ({ onCreate }: Props) => {
+  // Toggle state for accordion visibility
+  const [isOpen, setIsOpen] = useState(false);
+
   const [projectName, setProjectName] = useState("");
   const [projectDescription, setProjectDescription] = useState("");
   const [creating, setCreating] = useState(false);
   
-  // Split errors into field-specific errors and general API errors
   const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({});
   const [generalError, setGeneralError] = useState("");
 
@@ -49,9 +51,10 @@ const CreateProjectForm = ({ onCreate }: Props) => {
         description: trimmedDesc || null, // Send null if empty string
       });
 
-      // Reset form on success
+      // Reset form and collapse accordion on success
       setProjectName("");
       setProjectDescription("");
+      setIsOpen(false);
     } catch (err: any) {
       setGeneralError(err.response?.data?.message || "Failed to create project");
     } finally {
@@ -60,74 +63,116 @@ const CreateProjectForm = ({ onCreate }: Props) => {
   };
 
   return (
-    <section className="mb-8 rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
-      <h2 className="mb-4 text-lg font-semibold text-slate-900">
-        Create Project
-      </h2>
-
-      {/* General API Errors */}
-      {generalError && (
-        <div className="mb-4 rounded border border-red-200 bg-red-50 p-3 text-sm text-red-600">
-          {generalError}
+    <section className="mb-6 rounded-2xl border border-slate-200 bg-white shadow-sm overflow-hidden transition-all duration-200">
+      
+      {/* ACCORDION TRIGGER HEADER BUTTON */}
+      <button
+        type="button"
+        onClick={() => setIsOpen(!isOpen)}
+        className="flex w-full items-center justify-between px-6 py-4 text-left outline-none hover:bg-slate-50/50"
+      >
+        <div className="flex items-center gap-3">
+          <div className="flex h-7 w-7 items-center justify-center rounded-lg bg-blue-50 text-blue-600">
+            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2.5} stroke="currentColor" className="w-4 h-4">
+              <path strokeLinecap="round" strokeLinejoin="round" d="M12 4.5v15m7.5-7.5h-15" />
+            </svg>
+          </div>
+          <h2 className="text-base font-semibold text-slate-900">Create Project</h2>
         </div>
-      )}
-
-      <form onSubmit={handleSubmit} className="space-y-4" noValidate>
-        <div>
-          <label className="mb-2 block text-sm font-medium text-slate-700">
-            Project Name
-          </label>
-          <input
-            type="text"
-            placeholder="Enter project name"
-            value={projectName}
-            maxLength={150} // Hard limit at the keystroke level
-            onChange={(e) => {
-              setProjectName(e.target.value);
-              if (fieldErrors.name) setFieldErrors({ ...fieldErrors, name: "" });
-            }}
-            className={`w-full rounded-lg border px-4 py-2 text-slate-900 outline-none transition-colors ${
-              fieldErrors.name
-                ? "border-red-500 bg-red-50 focus:border-red-600"
-                : "border-slate-300 focus:border-blue-500"
-            }`}
-          />
-          {fieldErrors.name && (
-            <p className="mt-1 text-sm text-red-500">{fieldErrors.name}</p>
-          )}
-        </div>
-
-        <div>
-          <label className="mb-2 block text-sm font-medium text-slate-700">
-            Description
-          </label>
-          <textarea
-            placeholder="Enter project description"
-            value={projectDescription}
-            maxLength={2000} // Hard limit at the keystroke level
-            onChange={(e) => {
-              setProjectDescription(e.target.value);
-              if (fieldErrors.description) setFieldErrors({ ...fieldErrors, description: "" });
-            }}
-            className={`min-h-[100px] w-full rounded-lg border px-4 py-2 text-slate-900 outline-none transition-colors ${
-              fieldErrors.description
-                ? "border-red-500 bg-red-50 focus:border-red-600"
-                : "border-slate-300 focus:border-blue-500"
-            }`}
-          />
-          {fieldErrors.description && (
-            <p className="mt-1 text-sm text-red-500">{fieldErrors.description}</p>
-          )}
-        </div>
-
-        <button
-          type="submit"
-          disabled={creating}
-          className="rounded-lg bg-blue-600 px-5 py-2 font-medium text-white transition hover:bg-blue-700 disabled:cursor-not-allowed disabled:opacity-60"
+        
+        {/* Animated Chevron Indicator */}
+        <svg
+          xmlns="http://www.w3.org/2000/svg"
+          fill="none"
+          viewBox="0 0 24 24"
+          strokeWidth={2}
+          stroke="currentColor"
+          className={`h-5 w-5 text-slate-400 transition-transform duration-200 ${isOpen ? "rotate-180" : ""}`}
         >
-          {creating ? "Creating..." : "Create Project"}
-        </button>
-      </form>
+          <path strokeLinecap="round" strokeLinejoin="round" d="M19.5 8.25l-7.5 7.5-7.5-7.5" />
+        </svg>
+      </button>
+
+      {/* COLLAPSIBLE PANEL */}
+      <div
+        className={`transition-all duration-200 ease-in-out ${
+          isOpen ? "max-h-[1000px] border-t border-slate-100 p-6 opacity-100" : "max-h-0 opacity-0 pointer-events-none"
+        }`}
+      >
+        {/* General API Errors specific to this card panel */}
+        {generalError && (
+          <div className="mb-4 rounded-lg border border-red-200 bg-red-50 p-3 text-sm text-red-600">
+            {generalError}
+          </div>
+        )}
+
+        <form onSubmit={handleSubmit} className="space-y-4" noValidate>
+          <div>
+            <label className="mb-1.5 block text-sm font-medium text-slate-700">
+              Project Name
+            </label>
+            <input
+              type="text"
+              placeholder="Enter project name"
+              value={projectName}
+              maxLength={150} // Hard limit at the keystroke level
+              onChange={(e) => {
+                setProjectName(e.target.value);
+                if (fieldErrors.name) setFieldErrors({ ...fieldErrors, name: "" });
+              }}
+              className={`w-full rounded-lg border px-4 py-2 text-slate-900 outline-none transition-colors ${
+                fieldErrors.name
+                  ? "border-red-500 bg-red-50 focus:border-red-600"
+                  : "border-slate-300 focus:border-blue-500"
+              }`}
+            />
+            {fieldErrors.name && (
+              <p className="mt-1 text-sm text-red-500">{fieldErrors.name}</p>
+            )}
+          </div>
+
+          <div>
+            <label className="mb-1.5 block text-sm font-medium text-slate-700">
+              Description
+            </label>
+            <textarea
+              placeholder="Enter project description"
+              value={projectDescription}
+              maxLength={2000} // Hard limit at the keystroke level
+              onChange={(e) => {
+                setProjectDescription(e.target.value);
+                if (fieldErrors.description) setFieldErrors({ ...fieldErrors, description: "" });
+              }}
+              className={`min-h-[100px] w-full rounded-lg border px-4 py-2 text-slate-900 outline-none transition-colors ${
+                fieldErrors.description
+                  ? "border-red-500 bg-red-50 focus:border-red-600"
+                  : "border-slate-300 focus:border-blue-500"
+              }`}
+            />
+            {fieldErrors.description && (
+              <p className="mt-1 text-sm text-red-500">{fieldErrors.description}</p>
+            )}
+          </div>
+
+          <div className="flex items-center gap-3 pt-2">
+            <button
+              type="submit"
+              disabled={creating}
+              className="rounded-lg bg-blue-600 px-5 py-2 font-medium text-white transition hover:bg-blue-700 disabled:cursor-not-allowed disabled:opacity-60 whitespace-nowrap"
+            >
+              {creating ? "Creating..." : "Create Project"}
+            </button>
+            
+            <button
+              type="button"
+              onClick={() => setIsOpen(false)}
+              className="rounded-lg border border-slate-300 bg-white px-5 py-2 font-medium text-slate-700 transition hover:bg-slate-50 whitespace-nowrap"
+            >
+              Minimize
+            </button>
+          </div>
+        </form>
+      </div>
     </section>
   );
 };

@@ -98,4 +98,21 @@ public class WorkspaceController(IWorkspaceService workspaceService) : Controlle
 
         return Ok(members);
     }
+
+    [HttpPost("workspaces/{id:guid}/members")]
+    public async Task<IActionResult> AddWorkspaceMember(
+        Guid id,
+        [FromBody] AddMemberRequest request,
+        CancellationToken cancellationToken)
+    {
+        var userId = User.GetUserId();
+        
+        var result = await workspaceService.AddMemberByEmailAsync(id, userId, request, cancellationToken);
+
+        if (result.IsNotFound) return NotFound();
+        if (result.IsForbidden) return Forbid();
+        if (result.IsFailure) return BadRequest(new { message = result.ErrorMessage });
+
+        return Ok();
+    }
 }

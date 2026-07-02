@@ -35,3 +35,7 @@ export const getWorkspaceMembers = async (workspaceId: string): Promise<Workspac
   const response = await axiosInstance.get(`api/workspaces/${workspaceId}/members`);
   return response.data;
 };
+
+export const addWorkspaceMember = async (workspaceId: string, email: string): Promise<void> => {
+  await axiosInstance.post(`api/workspaces/${workspaceId}/members`, { email });
+};

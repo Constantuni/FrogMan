@@ -33,4 +33,10 @@ public interface IWorkspaceService
         Guid workspaceId,
         Guid userId,
         CancellationToken cancellationToken);
+
+    Task<WorkspaceResult> AddMemberByEmailAsync(
+        Guid workspaceId, 
+        Guid ownerId, 
+        AddMemberRequest request, 
+        CancellationToken cancellationToken);
 }

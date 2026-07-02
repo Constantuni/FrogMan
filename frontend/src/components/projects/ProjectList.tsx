@@ -13,7 +13,6 @@ const ProjectList = ({ projects, onOpen, onUpdate, onDelete }: Props) => {
   const [editingProjectName, setEditingProjectName] = useState("");
   const [editingProjectDescription, setEditingProjectDescription] = useState("");
   
-  // Split error states for field-specific and general API errors
   const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({});
   const [generalError, setGeneralError] = useState("");
   
@@ -112,7 +111,8 @@ const ProjectList = ({ projects, onOpen, onUpdate, onDelete }: Props) => {
       )}
 
       {projects.length > 0 && (
-        <div className="grid grid-cols-1 gap-5 md:grid-cols-2 xl:grid-cols-3">
+        /* Grid changed to support larger, wider cards (max 2 columns instead of 3) */
+        <div className="grid grid-cols-1 gap-5 xl:grid-cols-2">
           {projects.map((project) => {
             const isEditing = editingProjectId === project.id;
             const isUpdating = updatingId === project.id;
@@ -121,15 +121,17 @@ const ProjectList = ({ projects, onOpen, onUpdate, onDelete }: Props) => {
             return (
               <div
                 key={project.id}
-                className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm transition hover:shadow-md"
+                className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm transition hover:shadow-md flex flex-col justify-between overflow-hidden"
               >
-                <div className="mb-4 flex items-start justify-between gap-3">
-                  <span className="rounded-xl bg-violet-100 px-3 py-1 text-xs font-semibold text-violet-700">
+                {/* HEADER ROW */}
+                <div className="mb-4 flex items-center justify-between gap-4">
+                  <span className="shrink-0 rounded-xl bg-violet-100 px-3 py-1 text-xs font-semibold text-violet-700">
                     Project
                   </span>
 
                   {!isEditing && (
-                    <div className="flex gap-2">
+                    /* Standard row order layout: Edit is back on the left, Delete on the right */
+                    <div className="flex shrink-0 items-center gap-2">
                       <button
                         type="button"
                         onClick={() =>
@@ -156,9 +158,9 @@ const ProjectList = ({ projects, onOpen, onUpdate, onDelete }: Props) => {
                   )}
                 </div>
 
+                {/* CONTENT SECTION */}
                 {isEditing ? (
                   <div className="space-y-3">
-                    {/* General API Error for this specific card */}
                     {generalError && (
                       <div className="rounded border border-red-200 bg-red-50 p-2 text-sm text-red-600">
                         {generalError}
@@ -169,7 +171,7 @@ const ProjectList = ({ projects, onOpen, onUpdate, onDelete }: Props) => {
                       <input
                         type="text"
                         value={editingProjectName}
-                        maxLength={150} // Hard limit at the keystroke level
+                        maxLength={150}
                         onChange={(e) => {
                           setEditingProjectName(e.target.value);
                           if (fieldErrors.name) setFieldErrors({ ...fieldErrors, name: "" });
@@ -189,7 +191,7 @@ const ProjectList = ({ projects, onOpen, onUpdate, onDelete }: Props) => {
                     <div>
                       <textarea
                         value={editingProjectDescription}
-                        maxLength={2000} // Hard limit at the keystroke level
+                        maxLength={2000}
                         onChange={(e) => {
                           setEditingProjectDescription(e.target.value);
                           if (fieldErrors.description) setFieldErrors({ ...fieldErrors, description: "" });
@@ -230,13 +232,13 @@ const ProjectList = ({ projects, onOpen, onUpdate, onDelete }: Props) => {
                   <button
                     type="button"
                     onClick={() => onOpen(project.id)}
-                    className="w-full text-left"
+                    className="w-full text-left group"
                   >
-                    <h3 className="mb-2 truncate text-lg font-semibold text-slate-900 hover:text-blue-700 transition-colors">
+                    <h3 className="mb-2 truncate text-lg font-semibold text-slate-900 group-hover:text-blue-700 transition-colors">
                       {project.name}
                     </h3>
 
-                    <p className="mb-4 min-h-[48px] text-sm text-slate-500 line-clamp-3">
+                    <p className="mb-4 min-h-[48px] text-sm text-slate-500 line-clamp-3 break-words">
                       {project.description || "No description provided."}
                     </p>
 
@@ -244,7 +246,7 @@ const ProjectList = ({ projects, onOpen, onUpdate, onDelete }: Props) => {
                       Created at {new Date(project.createdAt).toLocaleString()}
                     </p>
 
-                    <div className="text-sm font-medium text-blue-600 transition-colors hover:text-blue-800">
+                    <div className="text-sm font-medium text-blue-600 transition-colors group-hover:text-blue-800">
                       Open project &rarr;
                     </div>
                   </button>
