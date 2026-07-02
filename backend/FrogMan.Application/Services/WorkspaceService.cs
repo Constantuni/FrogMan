@@ -1,6 +1,7 @@
 using FrogMan.Domain.Constants;
 using FrogMan.Domain.Entities;
 using FrogMan.Application.DTOs.Workspaces;
+using FrogMan.Application.DTOs.WorkspaceMembers;
 using FrogMan.Application.Interfaces.Repositories;
 using FrogMan.Application.Interfaces.Services;
 
@@ -71,11 +72,12 @@ public class WorkspaceService(
         if (workspace is null)
             return WorkspaceResult.NotFound();
 
-        var isMember = workspace.Members.Any(m => m.UserId == userId);
-        if (!isMember)
+        var currentMember = workspace.Members.FirstOrDefault(m => m.UserId == userId);
+        if (currentMember is null)
             return WorkspaceResult.NotFound();
 
-        if (workspace.OwnerUserId != userId)
+        // STRICT GUARD: Admins and Members cannot edit workspaces. Only Owners.
+        if (currentMember.Role != WorkspaceRoles.Owner)
             return WorkspaceResult.Forbidden();
 
         workspace.Name = request.Name.Trim();
@@ -96,11 +98,12 @@ public class WorkspaceService(
         if (workspace is null)
             return WorkspaceResult.NotFound();
 
-        var isMember = workspace.Members.Any(m => m.UserId == userId);
-        if (!isMember)
+        var currentMember = workspace.Members.FirstOrDefault(m => m.UserId == userId);
+        if (currentMember is null)
             return WorkspaceResult.NotFound();
 
-        if (workspace.OwnerUserId != userId)
+        // STRICT GUARD: Admins and Members cannot delete workspaces. Only Owners.
+        if (currentMember.Role != WorkspaceRoles.Owner)
             return WorkspaceResult.Forbidden();
 
         workspaceRepository.Delete(workspace);
@@ -110,24 +113,24 @@ public class WorkspaceService(
     }
 
     public async Task<List<WorkspaceMemberResponse>?> GetWorkspaceMembersAsync(
-    Guid workspaceId, 
-    Guid userId, 
-    CancellationToken cancellationToken)
-{
-    var workspace = await workspaceRepository.GetByIdWithMembersAsync(workspaceId, cancellationToken);
-
-    if (workspace is null || !workspace.Members.Any(m => m.UserId == userId))
-        return null;
-
-    return workspace.Members.Select(m => new WorkspaceMemberResponse
+        Guid workspaceId, 
+        Guid userId, 
+        CancellationToken cancellationToken)
     {
-        UserId = m.UserId,
-        Name = m.User?.Username ?? "Unknown User",
-        Email = m.User?.Email ?? string.Empty,
-        Role = m.Role,
-        JoinedAt = m.JoinedAt
-    }).ToList();
-}
+        var workspace = await workspaceRepository.GetByIdWithMembersAsync(workspaceId, cancellationToken);
+
+        if (workspace is null || !workspace.Members.Any(m => m.UserId == userId))
+            return null;
+
+        return workspace.Members.Select(m => new WorkspaceMemberResponse
+        {
+            UserId = m.UserId,
+            Name = m.User?.Username ?? "Unknown User",
+            Email = m.User?.Email ?? string.Empty,
+            Role = m.Role,
+            JoinedAt = m.JoinedAt
+        }).ToList();
+    }
 
     private static WorkspaceResponse MapToResponse(Workspace workspace)
     {
@@ -142,34 +145,34 @@ public class WorkspaceService(
 
     public async Task<WorkspaceResult> AddMemberByEmailAsync(
         Guid workspaceId, 
-        Guid ownerId, 
+        Guid userId,
         AddMemberRequest request, 
         CancellationToken cancellationToken)
     {
-        // 1. Fetch workspace context with its active join collection
         var workspace = await workspaceRepository.GetByIdWithMembersAsync(workspaceId, cancellationToken);
         if (workspace is null) 
             return WorkspaceResult.NotFound();
 
-        // 2. Multitenant authorization guard: verify only the owner can invite others
-        if (workspace.OwnerUserId != ownerId) 
+        var currentMember = workspace.Members.FirstOrDefault(m => m.UserId == userId);
+        if (currentMember is null)
+            return WorkspaceResult.NotFound();
+
+        // Owners and Admins can add members. Members cannot.
+        if (currentMember.Role != WorkspaceRoles.Owner && currentMember.Role != WorkspaceRoles.Admin)
             return WorkspaceResult.Forbidden();
 
-        // 3. Find target user by the requested email address
         var targetUser = await userRepository.GetByEmailAsync(request.Email.Trim(), cancellationToken);
         if (targetUser is null)
         {
             return WorkspaceResult.Failure("User with this email address does not exist.");
         }
 
-        // 4. Validate that they aren't already grouped into this tenant workspace
         var isAlreadyMember = workspace.Members.Any(m => m.UserId == targetUser.Id);
         if (isAlreadyMember)
         {
             return WorkspaceResult.Failure("User is already a member of this workspace.");
         }
 
-        // 5. Append new cross-link tracking record to the database
         var newMembership = new WorkspaceMember
         {
             WorkspaceId = workspaceId,
@@ -180,6 +183,57 @@ public class WorkspaceService(
         await workspaceRepository.AddMemberAsync(newMembership, cancellationToken);
         await unitOfWork.SaveChangesAsync(cancellationToken);
 
+        return WorkspaceResult.Success();
+    }
+
+    public async Task<WorkspaceResult> UpdateMemberRoleAsync(
+        Guid workspaceId, 
+        Guid currentUserId, 
+        Guid targetUserId, 
+        UpdateMemberRoleRequest request, 
+        CancellationToken cancellationToken)
+    {
+        var workspace = await workspaceRepository.GetByIdWithMembersAsync(workspaceId, cancellationToken);
+        if (workspace is null) return WorkspaceResult.NotFound();
+
+        var currentUserMembership = workspace.Members.FirstOrDefault(m => m.UserId == currentUserId);
+        if (currentUserMembership is null) return WorkspaceResult.NotFound();
+
+        // Owners and Admins can manage roles. Members cannot.
+        if (currentUserMembership.Role != WorkspaceRoles.Owner && currentUserMembership.Role != WorkspaceRoles.Admin)
+        {
+            return WorkspaceResult.Forbidden();
+        }
+
+        var targetMember = workspace.Members.FirstOrDefault(m => m.UserId == targetUserId);
+        if (targetMember is null) return WorkspaceResult.NotFound();
+
+        var newRole = request.Role.Trim();
+        if (!WorkspaceRoles.All.Contains(newRole))
+        {
+            return WorkspaceResult.Failure("Invalid role specified.");
+        }
+
+        if (targetMember.Role == WorkspaceRoles.Owner && currentUserId != targetUserId)
+        {
+            return WorkspaceResult.Forbidden(); // Admins cannot demote an Owner
+        }
+
+        if (newRole == WorkspaceRoles.Owner && currentUserMembership.Role != WorkspaceRoles.Owner)
+        {
+            return WorkspaceResult.Forbidden(); // Only current Owner can assign/transfer ownership
+        }
+
+        targetMember.Role = newRole;
+        
+        if (newRole == WorkspaceRoles.Owner)
+        {
+            currentUserMembership.Role = WorkspaceRoles.Admin;
+            workspace.OwnerUserId = targetUserId;
+            workspaceRepository.Update(workspace);
+        }
+
+        await unitOfWork.SaveChangesAsync(cancellationToken);
         return WorkspaceResult.Success();
     }
 }

@@ -13,9 +13,11 @@ public class TaskService(ITaskRepository repository) : ITaskService
         var workspaceId = await repository.GetWorkspaceIdByProjectIdAsync(projectId, cancellationToken);
         if (workspaceId is null) return Result<TaskResponse>.NotFound();
 
+        // Guard: Anyone within the workspace (Owner, Admin, Member) can create tasks
         if (!await repository.IsWorkspaceMemberAsync(workspaceId.Value, userId, cancellationToken))
             return Result<TaskResponse>.NotFound();
 
+        // Guard: Task assignment cross-checks that target user belongs to this specific tenant workspace
         var businessRuleError = await ValidateTaskBusinessRulesAsync(workspaceId.Value, request.AssignedToUserId, cancellationToken);
         if (businessRuleError is not null) return Result<TaskResponse>.Failure(businessRuleError);
 
@@ -65,6 +67,7 @@ public class TaskService(ITaskRepository repository) : ITaskService
         var task = await repository.GetByIdWithProjectAsync(taskId, cancellationToken);
         if (task is null) return Result<TaskResponse>.NotFound();
 
+        // Guard: Any workspace member can update tasks and alter assignments
         if (!await repository.IsWorkspaceMemberAsync(task.Project.WorkspaceId, userId, cancellationToken))
             return Result<TaskResponse>.NotFound();
 
@@ -103,6 +106,7 @@ public class TaskService(ITaskRepository repository) : ITaskService
         var normalizedAssignedToUserId = NormalizeOptionalGuid(assignedToUserId);
         if (!normalizedAssignedToUserId.HasValue) return null;
 
+        // Verifies the targeted assignee is an active team member of the tenant workspace
         var assigneeIsWorkspaceMember = await repository.IsWorkspaceMemberAsync(workspaceId, normalizedAssignedToUserId.Value, cancellationToken);
         if (!assigneeIsWorkspaceMember) return "Assigned user must be a member of the workspace.";
 

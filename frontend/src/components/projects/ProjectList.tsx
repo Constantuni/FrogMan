@@ -1,3 +1,4 @@
+// ProjectList.tsx
 import { useState } from "react";
 import type { ProjectResponse, UpdateProjectRequest } from "../../types/project";
 
@@ -6,9 +7,10 @@ interface Props {
   onOpen: (projectId: string) => void;
   onUpdate: (projectId: string, payload: UpdateProjectRequest) => Promise<void>;
   onDelete: (projectId: string) => Promise<void>;
+  canManage?: boolean; 
 }
 
-const ProjectList = ({ projects, onOpen, onUpdate, onDelete }: Props) => {
+const ProjectList = ({ projects, onOpen, onUpdate, onDelete, canManage = false }: Props) => {
   const [editingProjectId, setEditingProjectId] = useState<string | null>(null);
   const [editingProjectName, setEditingProjectName] = useState("");
   const [editingProjectDescription, setEditingProjectDescription] = useState("");
@@ -24,6 +26,7 @@ const ProjectList = ({ projects, onOpen, onUpdate, onDelete }: Props) => {
     currentName: string,
     currentDescription?: string | null
   ) => {
+    if (!canManage) return; 
     setEditingProjectId(projectId);
     setEditingProjectName(currentName);
     setEditingProjectDescription(currentDescription ?? "");
@@ -40,6 +43,7 @@ const ProjectList = ({ projects, onOpen, onUpdate, onDelete }: Props) => {
   };
 
   const handleUpdateProject = async (projectId: string) => {
+    if (!canManage) return; 
     setFieldErrors({});
     setGeneralError("");
     
@@ -47,19 +51,16 @@ const ProjectList = ({ projects, onOpen, onUpdate, onDelete }: Props) => {
     const trimmedDesc = editingProjectDescription.trim();
     const errors: Record<string, string> = {};
 
-    // 1. Name Validation (CascadeMode.Stop)
     if (!trimmedName) {
       errors.name = "Project name is required.";
     } else if (trimmedName.length > 150) {
       errors.name = "Project name must not exceed 150 characters.";
     }
 
-    // 2. Description Validation
     if (trimmedDesc.length > 2000) {
       errors.description = "Project description must not exceed 2000 characters.";
     }
 
-    // Halt if validation fails
     if (Object.keys(errors).length > 0) {
       setFieldErrors(errors);
       return;
@@ -70,9 +71,8 @@ const ProjectList = ({ projects, onOpen, onUpdate, onDelete }: Props) => {
     try {
       await onUpdate(projectId, {
         name: trimmedName,
-        description: trimmedDesc || null, // Send null if empty string
+        description: trimmedDesc || null,
       });
-
       handleCancelEdit();
     } catch (err: any) {
       setGeneralError(err.response?.data?.message || "Failed to update project");
@@ -82,6 +82,7 @@ const ProjectList = ({ projects, onOpen, onUpdate, onDelete }: Props) => {
   };
 
   const handleDeleteProject = async (projectId: string) => {
+    if (!canManage) return; 
     const confirmed = window.confirm(
       "Are you sure you want to delete this project?"
     );
@@ -111,7 +112,6 @@ const ProjectList = ({ projects, onOpen, onUpdate, onDelete }: Props) => {
       )}
 
       {projects.length > 0 && (
-        /* Grid changed to support larger, wider cards (max 2 columns instead of 3) */
         <div className="grid grid-cols-1 gap-5 xl:grid-cols-2">
           {projects.map((project) => {
             const isEditing = editingProjectId === project.id;
@@ -130,7 +130,6 @@ const ProjectList = ({ projects, onOpen, onUpdate, onDelete }: Props) => {
                   </span>
 
                   {!isEditing && (
-                    /* Standard row order layout: Edit is back on the left, Delete on the right */
                     <div className="flex shrink-0 items-center gap-2">
                       <button
                         type="button"
@@ -141,7 +140,8 @@ const ProjectList = ({ projects, onOpen, onUpdate, onDelete }: Props) => {
                             project.description
                           )
                         }
-                        className="rounded-lg border border-slate-300 px-3 py-1 text-xs font-medium text-slate-700 transition hover:bg-slate-100"
+                        disabled={!canManage}
+                        className="rounded-lg border border-slate-300 px-3 py-1 text-xs font-medium text-slate-700 transition hover:bg-slate-100 disabled:opacity-40 disabled:hover:bg-transparent disabled:bg-slate-50 disabled:text-slate-400 disabled:cursor-not-allowed"
                       >
                         Edit
                       </button>
@@ -149,8 +149,8 @@ const ProjectList = ({ projects, onOpen, onUpdate, onDelete }: Props) => {
                       <button
                         type="button"
                         onClick={() => handleDeleteProject(project.id)}
-                        disabled={isDeleting}
-                        className="rounded-lg bg-red-500 px-3 py-1 text-xs font-medium text-white transition hover:bg-red-600 disabled:cursor-not-allowed disabled:opacity-60"
+                        disabled={isDeleting || !canManage}
+                        className="rounded-lg bg-red-500 px-3 py-1 text-xs font-medium text-white transition hover:bg-red-600 disabled:cursor-not-allowed disabled:opacity-40 disabled:bg-slate-200 disabled:text-slate-400 disabled:cursor-not-allowed"
                       >
                         {isDeleting ? "Deleting..." : "Delete"}
                       </button>

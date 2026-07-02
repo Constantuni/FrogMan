@@ -8,7 +8,8 @@ import CreateProjectForm from "../components/projects/CreateProjectForm";
 import ProjectList from "../components/projects/ProjectList";
 import { AddMemberForm } from "../components/workspaces/AddMemberForm";
 import { useProjectStore } from "../store/projectStore";
-import { useWorkspaceStore } from "../store/workspaceStore"; // Import workspace store
+import { useWorkspaceStore } from "../store/workspaceStore"; 
+import { useAuthStore } from "../store/authStore"; 
 import type {
   CreateProjectRequest,
   UpdateProjectRequest,
@@ -30,12 +31,18 @@ const WorkspacePage = () => {
     removeProject,
   } = useProjectStore();
 
-  // Extract the fetchMembers action from the workspace store
-  const { fetchMembers } = useWorkspaceStore();
+  // Extracted isLoadingMembers state to prevent early UI lockouts
+  const { fetchMembers, currentMembers, isLoadingMembers } = useWorkspaceStore();
+  const { user } = useAuthStore();
 
   const [workspace, setWorkspace] = useState<WorkspaceResponse | null>(null);
   const [workspaceLoading, setWorkspaceLoading] = useState(true);
   const [workspaceError, setWorkspaceError] = useState("");
+
+  // Computed permission check
+  const currentUserMembership = currentMembers?.find((m) => m.userId === user?.id);
+  const currentUserRole = currentUserMembership?.role;
+  const canManageProjects = currentUserRole === "Owner" || currentUserRole === "Admin";
 
   useEffect(() => {
     if (!workspaceId) return;
@@ -48,7 +55,6 @@ const WorkspacePage = () => {
         const data = await getWorkspaceById(workspaceId);
         setWorkspace(data);
       } catch (err) {
-        // Standardized Problem Details parsing
         const { title } = parseApiError(err);
         setWorkspaceError(title);
       } finally {
@@ -58,13 +64,11 @@ const WorkspacePage = () => {
 
     loadWorkspace();
     fetchProjectsByWorkspace(workspaceId);
-    
-    // Fire the API dispatch to populate the directory roster right on page load/refresh
     fetchMembers(workspaceId);
-  }, [workspaceId, fetchProjectsByWorkspace, fetchMembers]); // Added fetchMembers to dependencies
+  }, [workspaceId, fetchProjectsByWorkspace, fetchMembers]);
 
   const handleCreateProject = async (payload: CreateProjectRequest) => {
-    if (!workspaceId) return;
+    if (!workspaceId || !canManageProjects) return;
     try {
       await addProject(workspaceId, payload);
     } catch (err) {
@@ -76,7 +80,7 @@ const WorkspacePage = () => {
     projectId: string,
     payload: UpdateProjectRequest
   ) => {
-    if (!workspaceId) return;
+    if (!workspaceId || !canManageProjects) return;
     try {
       await editProject(workspaceId, projectId, payload);
     } catch (err) {
@@ -85,7 +89,7 @@ const WorkspacePage = () => {
   };
 
   const handleDeleteProject = async (projectId: string) => {
-    if (!workspaceId) return;
+    if (!workspaceId || !canManageProjects) return;
     try {
       await removeProject(workspaceId, projectId);
     } catch (err) {
@@ -116,45 +120,43 @@ const WorkspacePage = () => {
       backTo="/dashboard"
       backLabel="Back to Dashboard"
     >
-      {/* Standardized Workspace Fetch Error */}
       {workspaceError && (
         <div className="mb-6 rounded-xl border border-red-200 bg-red-50 p-4 text-red-600">
           {workspaceError}
         </div>
       )}
 
-      {/* TOP SECTION: Create Project Form stays full-width right on top */}
-      {!workspaceError && !workspaceLoading && (
+      {/* Render CreateProjectForm unconditionally once base loading states clear, passing permission flag down */}
+      {!workspaceError && !workspaceLoading && !isLoadingMembers && (
         <div className="mb-6">
-          <CreateProjectForm onCreate={handleCreateProject} />
+          <CreateProjectForm onCreate={handleCreateProject} disabled={!canManageProjects} />
         </div>
       )}
 
-      {/* BOTTOM SECTION: Two-column grid split for layout components */}
       <div className="grid grid-cols-1 gap-6 lg:grid-cols-3 items-start">
         
-        {/* LEFT SIDEBAR COLUMN: Compact Member Management with max-width defense */}
+        {/* LEFT SIDEBAR COLUMN */}
         <div className="lg:col-span-1 w-full max-w-md lg:sticky lg:top-6">
-          {!workspaceError && !workspaceLoading && (
-            <AddMemberForm workspaceId={workspaceId} />
+          {workspaceLoading || isLoadingMembers ? (
+            <div className="p-6 bg-white rounded-2xl border border-slate-200 text-slate-400 italic text-sm animate-pulse">
+              Loading workspace settings...
+            </div>
+          ) : (
+            !workspaceError && <AddMemberForm workspaceId={workspaceId} />
           )}
         </div>
 
-        {/* RIGHT MAIN COLUMN: Project Feed Index List */}
+        {/* RIGHT MAIN COLUMN */}
         <div className="lg:col-span-2">
-          {isLoading && (
+          {isLoading || isLoadingMembers ? (
             <p className="text-slate-600 bg-white p-6 rounded-2xl border border-slate-200">
               Loading projects...
             </p>
-          )}
-          
-          {!isLoading && error && (
+          ) : error ? (
             <div className="my-4 rounded-xl border border-red-200 bg-red-50 p-4 text-red-600">
               {error}
             </div>
-          )}
-
-          {!isLoading && !error && (
+          ) : (
             <ProjectList
               projects={projects}
               onOpen={(projectId) =>
@@ -162,6 +164,7 @@ const WorkspacePage = () => {
               }
               onUpdate={handleUpdateProject}
               onDelete={handleDeleteProject}
+              canManage={canManageProjects}
             />
           )}
         </div>

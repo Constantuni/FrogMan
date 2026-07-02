@@ -1,4 +1,4 @@
-namespace FrogMan.Application.DTOs.Workspaces;
+namespace FrogMan.Application.DTOs.WorkspaceMembers;
 
 public class WorkspaceMemberResponse
 {

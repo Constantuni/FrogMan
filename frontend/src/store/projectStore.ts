@@ -5,7 +5,7 @@ import {
   getProjectsByWorkspace,
   updateProject,
 } from "../api/projects";
-import { parseApiError } from "../api/errorHelper"; // Import our helper
+import { parseApiError } from "../api/errorHelper";
 import type {
   CreateProjectRequest,
   ProjectResponse,
@@ -38,7 +38,6 @@ export const useProjectStore = create<ProjectState>((set) => ({
       const projects = await getProjectsByWorkspace(workspaceId);
       set({ projects, isLoading: false });
     } catch (error) {
-      // Use the helper to parse the standard error
       const { title } = parseApiError(error);
       set({ error: title, isLoading: false });
     }

@@ -1,4 +1,5 @@
 using FrogMan.Application.DTOs.Workspaces;
+using FrogMan.Application.DTOs.WorkspaceMembers;
 
 namespace FrogMan.Application.Interfaces.Services;
 
@@ -38,5 +39,12 @@ public interface IWorkspaceService
         Guid workspaceId, 
         Guid ownerId, 
         AddMemberRequest request, 
+        CancellationToken cancellationToken);
+
+    Task<WorkspaceResult> UpdateMemberRoleAsync(
+        Guid workspaceId, 
+        Guid currentUserId, 
+        Guid targetUserId, 
+        UpdateMemberRoleRequest request, 
         CancellationToken cancellationToken);
 }

@@ -1,6 +1,7 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using FrogMan.Application.DTOs.Workspaces;
+using FrogMan.Application.DTOs.WorkspaceMembers;
 using FrogMan.Application.Services;
 using FrogMan.Application.Interfaces.Services;
 using FrogMan.Api.Common;
@@ -114,5 +115,23 @@ public class WorkspaceController(IWorkspaceService workspaceService) : Controlle
         if (result.IsFailure) return BadRequest(new { message = result.ErrorMessage });
 
         return Ok();
+    }
+
+    [HttpPut("workspaces/{workspaceId:guid}/members/{targetUserId:guid}/role")]
+    public async Task<IActionResult> UpdateMemberRole(
+        Guid workspaceId,
+        Guid targetUserId,
+        [FromBody] UpdateMemberRoleRequest request,
+        CancellationToken cancellationToken)
+    {
+        var currentUserId = User.GetUserId();
+        
+        var result = await workspaceService.UpdateMemberRoleAsync(workspaceId, currentUserId, targetUserId, request, cancellationToken);
+
+        if (result.IsNotFound) return NotFound();
+        if (result.IsForbidden) return Forbid();
+        if (result.IsFailure) return BadRequest(new { message = result.ErrorMessage });
+
+        return NoContent();
     }
 }

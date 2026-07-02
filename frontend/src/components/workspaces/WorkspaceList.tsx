@@ -1,3 +1,4 @@
+// WorkspaceList.tsx
 import type { WorkspaceResponse } from "../../types/workspace";
 import { useState } from "react";
 
@@ -6,17 +7,19 @@ interface Props {
   onOpen: (id: string) => void;
   onUpdate: (id: string, name: string) => Promise<void>;
   onDelete: (id: string) => Promise<void>;
+  currentUserId?: string; // Prop to compare with workspace.ownerUserId
 }
 
-const WorkspaceList = ({ workspaces = [], onOpen, onUpdate, onDelete }: Props) => {
+const WorkspaceList = ({ workspaces = [], onOpen, onUpdate, onDelete, currentUserId }: Props) => {
   const [editingId, setEditingId] = useState<string | null>(null);
   const [editingName, setEditingName] = useState("");
   const [error, setError] = useState("");
 
-  const handleStartEdit = (id: string, name: string) => {
+  const handleStartEdit = (id: string, name: string, canManage: boolean) => {
+    if (!canManage) return; // Fail-safe structural block
     setEditingId(id);
     setEditingName(name);
-    setError(""); // Clear any previous errors
+    setError(""); 
   };
 
   const handleCancel = () => {
@@ -25,11 +28,11 @@ const WorkspaceList = ({ workspaces = [], onOpen, onUpdate, onDelete }: Props) =
     setError("");
   };
 
-  const handleSave = async (id: string) => {
+  const handleSave = async (id: string, canManage: boolean) => {
+    if (!canManage) return; 
     setError("");
     const trimmed = editingName.trim();
 
-    // Client-side validation mirroring FluentValidation (CascadeMode.Stop)
     if (!trimmed) {
       setError("Workspace name is required.");
       return;
@@ -40,7 +43,6 @@ const WorkspaceList = ({ workspaces = [], onOpen, onUpdate, onDelete }: Props) =
 
     try {
       await onUpdate(id, trimmed);
-      // Only clear state if the update succeeds
       setEditingId(null);
       setEditingName("");
     } catch (err) {
@@ -48,7 +50,6 @@ const WorkspaceList = ({ workspaces = [], onOpen, onUpdate, onDelete }: Props) =
     }
   };
 
-  // Safety check to ensure it's an array before checking .length or .map()
   if (!Array.isArray(workspaces)) {
     console.error("WorkspaceList expected an array, but received:", workspaces);
     return null; 
@@ -70,6 +71,9 @@ const WorkspaceList = ({ workspaces = [], onOpen, onUpdate, onDelete }: Props) =
         <div className="grid grid-cols-1 gap-5 sm:grid-cols-2 xl:grid-cols-3">
           {workspaces.map((workspace) => {
             const isEditing = editingId === workspace.id;
+            
+            // Check ownership: True if the logged-in user matches the workspace's OwnerUserId
+            const canManageWorkspace = workspace.ownerUserId === currentUserId;
 
             return (
               <div
@@ -83,18 +87,26 @@ const WorkspaceList = ({ workspaces = [], onOpen, onUpdate, onDelete }: Props) =
 
                   {!isEditing && (
                     <div className="flex gap-2">
+                      {/* EDIT BUTTON (Grayed out for Admins & Members) */}
                       <button
                         onClick={() =>
-                          handleStartEdit(workspace.id, workspace.name)
+                          handleStartEdit(workspace.id, workspace.name, canManageWorkspace)
                         }
-                        className="rounded border border-slate-300 px-3 py-1 text-xs text-slate-600 transition-colors hover:bg-slate-50"
+                        disabled={!canManageWorkspace}
+                        className="rounded border border-slate-300 px-3 py-1 text-xs font-medium text-slate-600 transition-colors hover:bg-slate-50 disabled:opacity-40 disabled:hover:bg-transparent disabled:bg-slate-50 disabled:text-slate-400 disabled:cursor-not-allowed"
                       >
                         Edit
                       </button>
 
+                      {/* DELETE BUTTON (Grayed out for Admins & Members) */}
                       <button
-                        onClick={() => onDelete(workspace.id)}
-                        className="rounded bg-red-500 px-3 py-1 text-xs text-white transition-colors hover:bg-red-600"
+                        onClick={() => {
+                          if (window.confirm("Are you sure you want to delete this workspace?")) {
+                            onDelete(workspace.id);
+                          }
+                        }}
+                        disabled={!canManageWorkspace}
+                        className="rounded bg-red-500 px-3 py-1 text-xs font-medium text-white transition-colors hover:bg-red-600 disabled:opacity-40 disabled:bg-slate-200 disabled:text-slate-400 disabled:cursor-not-allowed"
                       >
                         Delete
                       </button>
@@ -107,24 +119,25 @@ const WorkspaceList = ({ workspaces = [], onOpen, onUpdate, onDelete }: Props) =
                     <input
                       value={editingName}
                       onChange={(e) => setEditingName(e.target.value)}
-                      maxLength={150} // Hard limit at the keystroke level
+                      maxLength={150}
                       autoFocus
+                      disabled={!canManageWorkspace}
                       className={`mb-2 w-full rounded border px-3 py-2 text-slate-900 outline-none transition-colors ${
                         error
                           ? "border-red-500 bg-red-50 focus:border-red-600"
                           : "border-slate-300 focus:border-blue-500"
-                      }`}
+                      } disabled:bg-slate-50 disabled:text-slate-400`}
                     />
 
-                    {/* Inline Error State */}
                     {error && (
                       <p className="mb-3 text-xs text-red-500">{error}</p>
                     )}
 
                     <div className="flex gap-2">
                       <button
-                        onClick={() => handleSave(workspace.id)}
-                        className="rounded bg-blue-600 px-4 py-2 text-sm text-white transition-colors hover:bg-blue-700"
+                        onClick={() => handleSave(workspace.id, canManageWorkspace)}
+                        disabled={!canManageWorkspace}
+                        className="rounded bg-blue-600 px-4 py-2 text-sm text-white transition-colors hover:bg-blue-700 disabled:opacity-50"
                       >
                         Save
                       </button>

@@ -39,3 +39,11 @@ export const getWorkspaceMembers = async (workspaceId: string): Promise<Workspac
 export const addWorkspaceMember = async (workspaceId: string, email: string): Promise<void> => {
   await axiosInstance.post(`api/workspaces/${workspaceId}/members`, { email });
 };
+
+export const updateWorkspaceMemberRole = async (
+  workspaceId: string,  
+  targetUserId: string, 
+  role: string
+): Promise<void> => {
+  await axiosInstance.put(`api/workspaces/${workspaceId}/members/${targetUserId}/role`, { role });
+};

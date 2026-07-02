@@ -1,6 +1,6 @@
 import { useMemo, useState } from "react";
-import { useWorkspaceStore } from "../../store/workspaceStore"; // Import our workspace store
-import { parseApiError } from "../../api/errorHelper"; // Import standard error parser
+import { useWorkspaceStore } from "../../store/workspaceStore";
+import { parseApiError } from "../../api/errorHelper";
 import type { TaskResponse, UpdateTaskRequest } from "../../types/task";
 import {
   TaskPriorities,
@@ -16,7 +16,6 @@ interface Props {
 }
 
 const TaskList = ({ tasks, onUpdate, onDelete }: Props) => {
-  // Consume our multi-tenant member directory and loading states
   const { currentMembers, isLoadingMembers } = useWorkspaceStore();
 
   const [editingTaskId, setEditingTaskId] = useState<string | null>(null);
@@ -87,7 +86,7 @@ const TaskList = ({ tasks, onUpdate, onDelete }: Props) => {
         status: editingStatus,
         priority: editingPriority,
         assignedToUserId: editingAssignedToUserId.trim() || null,
-        dueDate: editingDueDate ? new Date(editingDueDate).toISOString() : null, // Safely pass UTC string
+        dueDate: editingDueDate ? new Date(editingDueDate).toISOString() : null,
       });
 
       handleCancelEdit();
@@ -143,7 +142,6 @@ const TaskList = ({ tasks, onUpdate, onDelete }: Props) => {
                 const isUpdating = updatingId === task.id;
                 const isDeleting = deletingId === task.id;
 
-                // Find human-readable user details by cross-referencing task ID string
                 const currentAssignee = currentMembers.find(
                   (m) => m.userId === task.assignedToUserId
                 );

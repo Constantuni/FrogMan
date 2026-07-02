@@ -5,7 +5,8 @@ import {
   getWorkspaces,
   updateWorkspace,
   getWorkspaceMembers,
-  addWorkspaceMember, // Ensure this API utility is imported
+  addWorkspaceMember,
+  updateWorkspaceMemberRole, // 1. Import your new API helper
 } from "../api/workspaces";
 import { parseApiError } from "../api/errorHelper";
 import type {
@@ -24,9 +25,11 @@ interface WorkspaceState {
   fetchWorkspaces: () => Promise<void>;
   fetchMembers: (workspaceId: string) => Promise<void>;
   addWorkspace: (name: string) => Promise<void>;
-  addMember: (workspaceId: string, email: string) => Promise<void>; // Added contract item
+  addMember: (workspaceId: string, email: string, role: string) => Promise<void>;
   editWorkspace: (id: string, payload: UpdateWorkspaceRequest) => Promise<void>;
   removeWorkspace: (id: string) => Promise<void>;
+  // 2. Add the contract item
+  changeMemberRole: (workspaceId: string, targetUserId: string, role: string) => Promise<void>;
 }
 
 export const useWorkspaceStore = create<WorkspaceState>((set) => ({
@@ -38,7 +41,6 @@ export const useWorkspaceStore = create<WorkspaceState>((set) => ({
 
   fetchWorkspaces: async () => {
     set({ isLoading: true, error: null });
-
     try {
       const workspaces = await getWorkspaces();
       set({ workspaces, isLoading: false });
@@ -50,7 +52,6 @@ export const useWorkspaceStore = create<WorkspaceState>((set) => ({
 
   fetchMembers: async (workspaceId: string) => {
     set({ isLoadingMembers: true, error: null });
-
     try {
       const members = await getWorkspaceMembers(workspaceId);
       set({ currentMembers: members, isLoadingMembers: false });
@@ -61,31 +62,45 @@ export const useWorkspaceStore = create<WorkspaceState>((set) => ({
     }
   },
 
-  // FIXED: Implemented the missing addMember action block
   addMember: async (workspaceId: string, email: string) => {
     set({ isLoadingMembers: true, error: null });
-
     try {
-      // 1. Send membership creation payload to API endpoint
       await addWorkspaceMember(workspaceId, email);
-
-      // 2. Clear state loaders and fetch updated member list directory automatically
       const updatedMembers = await getWorkspaceMembers(workspaceId);
       set({ currentMembers: updatedMembers, isLoadingMembers: false });
     } catch (error) {
       const { title } = parseApiError(error);
       set({ error: title, isLoadingMembers: false });
-      throw error; // Propagate up so component local catch blocks can read the title
+      throw error;
+    }
+  },
+
+  // 3. Implement the role update action block
+  changeMemberRole: async (workspaceId: string, targetUserId: string, role: string) => {
+    set({ isLoadingMembers: true, error: null });
+    try {
+      // Direct update to backend API
+      await updateWorkspaceMemberRole(workspaceId, targetUserId, role);
+
+      // Perform a clean state mutation manually to avoid an entire grid round-trip re-fetch
+      set((state) => ({
+        currentMembers: state.currentMembers.map((member) =>
+          member.userId === targetUserId ? { ...member, role } : member
+        ),
+        isLoadingMembers: false,
+      }));
+    } catch (error) {
+      const { title } = parseApiError(error);
+      set({ error: title, isLoadingMembers: false });
+      throw error;
     }
   },
 
   addWorkspace: async (name: string) => {
     set({ isLoading: true, error: null });
-
     try {
       const payload: CreateWorkspaceRequest = { name };
       const created = await createWorkspace(payload);
-
       set((state) => ({
         workspaces: [created, ...state.workspaces],
         isLoading: false,
@@ -99,18 +114,11 @@ export const useWorkspaceStore = create<WorkspaceState>((set) => ({
 
   editWorkspace: async (id, payload) => {
     set({ isLoading: true, error: null });
-
     try {
       await updateWorkspace(id, payload);
-
       set((state) => ({
         workspaces: state.workspaces.map((workspace) =>
-          workspace.id === id
-            ? {
-                ...workspace,
-                name: payload.name,
-              }
-            : workspace
+          workspace.id === id ? { ...workspace, name: payload.name } : workspace
         ),
         isLoading: false,
       }));
@@ -123,10 +131,8 @@ export const useWorkspaceStore = create<WorkspaceState>((set) => ({
 
   removeWorkspace: async (id) => {
     set({ isLoading: true, error: null });
-
     try {
       await deleteWorkspace(id);
-
       set((state) => ({
         workspaces: state.workspaces.filter((workspace) => workspace.id !== id),
         isLoading: false,
